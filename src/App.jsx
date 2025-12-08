@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import './App.css';
 
 function App() {
   const [data, setData] = useState(null);
@@ -20,6 +21,11 @@ function App() {
   const [imageLoadingByIndex, setImageLoadingByIndex] = useState({});
   const [imageFilterLoading, setImageFilterLoading] = useState(false);
   
+  // New states for modal and multi-select
+  const [showModal, setShowModal] = useState(false);
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [showSelectedStep, setShowSelectedStep] = useState(false);
+  
   const fileInputRef = useRef(null);
 
   // Handle image selection
@@ -30,6 +36,8 @@ function App() {
       setImagePreview(URL.createObjectURL(file));
       setData(null);
       setError(null);
+      setSelectedImages([]);
+      setShowSelectedStep(false);
     }
   };
 
@@ -42,6 +50,8 @@ function App() {
       setImagePreview(URL.createObjectURL(file));
       setData(null);
       setError(null);
+      setSelectedImages([]);
+      setShowSelectedStep(false);
     }
   };
 
@@ -88,10 +98,13 @@ function App() {
         
         setFailedImageIndexes([]);
         setImageLoadingByIndex({});
+        setSelectedImages([]);
+        setShowSelectedStep(false);
         
-        // Simulate image filtering with delay
+        // Open modal to show images for selection
         setTimeout(() => {
           setImageFilterLoading(false);
+          setShowModal(true);
         }, 500);
       } else {
         setError(response.data.message || 'Analysis failed');
@@ -104,6 +117,29 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Toggle image selection in modal
+  const toggleImageSelection = (imageUrl, index) => {
+    setSelectedImages(prev => {
+      const isSelected = prev.some(img => img.url === imageUrl);
+      if (isSelected) {
+        return prev.filter(img => img.url !== imageUrl);
+      } else {
+        return [...prev, { url: imageUrl, index }];
+      }
+    });
+  };
+
+  // Handle next button in modal
+  const handleModalNext = () => {
+    setShowModal(false);
+    setShowSelectedStep(true);
+  };
+
+  // Remove selected image from step 3
+  const removeSelectedImage = (imageUrl) => {
+    setSelectedImages(prev => prev.filter(img => img.url !== imageUrl));
   };
 
   // Clear all data
@@ -124,6 +160,9 @@ function App() {
     setFailedImageIndexes([]);
     setImageLoadingByIndex({});
     setImageFilterLoading(false);
+    setSelectedImages([]);
+    setShowModal(false);
+    setShowSelectedStep(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -158,9 +197,14 @@ function App() {
 
   // Get current images (similar images only)
   const getCurrentImages = () => {
-    if (!data?.data?.web_matches?.similar_images) return [];
+    if (!data?.data?.web_matches?.similar_images && !data?.data?.web_matches?.partial_matches && !data?.data?.full_matches) return [];
+    
+    const responseData = [...data?.data?.web_matches?.similar_images, ...data?.data?.web_matches?.partial_matches, ...data?.data?.web_matches?.full_matches]
 
-    return data.data.web_matches?.similar_images;
+    console.log("ResponseData: ", responseData);
+    
+    
+    return responseData;
   };
 
   // Count valid images
@@ -171,50 +215,13 @@ function App() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      padding: '20px'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '1400px',
-        margin: '0 auto',
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '20px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
-        overflow: 'hidden'
-      }}>
+    <div className="vision-analyzer-app">
+      <div className="container">
         {/* Header */}
-        <div style={{
-          padding: '30px 40px',
-          background: 'white',
-          borderBottom: '1px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '20px'
-        }}>
-          <div>
-            <h1 style={{
-              fontSize: '32px',
-              fontWeight: 700,
-              marginBottom: '8px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>
-              Google Vision API Analyzer
-            </h1>
-            <p style={{
-              color: '#718096',
-              fontSize: '16px'
-            }}>
-              Upload an image to analyze with Google Cloud Vision API
-            </p>
+        <div className="header">
+          <div className="header-content">
+            <h1>Google Vision API Analyzer</h1>
+            <p>Upload an image to analyze with Google Cloud Vision API</p>
           </div>
           
           {data && (
@@ -250,402 +257,117 @@ function App() {
           )}
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1.5fr',
-          gap: '30px',
-          padding: '40px',
-          minHeight: '600px'
-        }}>
+        <div className="main-content">
           {/* Left Panel - Product Info & Upload */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '30px'
-          }}>
+          <div className="left-panel">
             {/* Product Information Card - Always Visible */}
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '25px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-              border: '1px solid #e2e8f0'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '20px'
-              }}>
-                <h2 style={{
-                  fontSize: '20px',
-                  fontWeight: 600,
-                  color: '#2d3748',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <span style={{
-                    background: '#667eea',
-                    color: 'white',
-                    width: '28px',
-                    height: '28px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px'
-                  }}>
-                    1
-                  </span>
+            <div className="card">
+              <div className="card-header">
+                <div className="card-title">
+                  <span className="step-number">1</span>
                   Product Information
-                </h2>
+                </div>
                 {data?.gpt_response && (
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#48bb78',
-                    background: '#f0fff4',
-                    padding: '4px 10px',
-                    borderRadius: '12px',
-                    fontWeight: 600
-                  }}>
+                  <div className="auto-filled">
                     ✓ Auto-filled from API
                   </div>
                 )}
               </div>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '15px',
-                fontSize: '14px'
-              }}>
+              <div className="form-grid">
                 <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 600,
-                    color: '#4a5568',
-                    fontSize: '13px'
-                  }}>
-                    Product Name *
-                  </label>
+                  <label>Product Name *</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={productInfo.product_name}
                     onChange={e => setProductInfo(prev => ({ ...prev, product_name: e.target.value }))}
                     placeholder="Enter product name"
-                    style={{
-                      color:"black",
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      background: '#fafafa'
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#667eea';
-                      e.target.style.background = 'white';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e2e8f0';
-                      e.target.style.background = '#fafafa';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   />
                 </div>
 
                 <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 600,
-                    color: '#4a5568',
-                    fontSize: '13px'
-                  }}>
-                    Brand
-                  </label>
+                  <label>Brand</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={productInfo.brand}
                     onChange={e => setProductInfo(prev => ({ ...prev, brand: e.target.value }))}
                     placeholder="Enter brand name"
-                    style={{
-                      color:"black",
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      background: '#fafafa'
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#667eea';
-                      e.target.style.background = 'white';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e2e8f0';
-                      e.target.style.background = '#fafafa';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   />
                 </div>
 
                 <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 600,
-                    color: '#4a5568',
-                    fontSize: '13px'
-                  }}>
-                    SKU
-                  </label>
+                  <label>SKU</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={productInfo.SKU}
                     onChange={e => setProductInfo(prev => ({ ...prev, SKU: e.target.value }))}
                     placeholder="Enter SKU"
-                    style={{
-                      color:"black",
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      background: '#fafafa'
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#667eea';
-                      e.target.style.background = 'white';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e2e8f0';
-                      e.target.style.background = '#fafafa';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   />
                 </div>
 
                 <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 600,
-                    color: '#4a5568',
-                    fontSize: '13px'
-                  }}>
-                    Category
-                  </label>
+                  <label>Category</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={productInfo.category}
                     onChange={e => setProductInfo(prev => ({ ...prev, category: e.target.value }))}
                     placeholder="Enter category"
-                    style={{
-                      color:"black",
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      background: '#fafafa'
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#667eea';
-                      e.target.style.background = 'white';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e2e8f0';
-                      e.target.style.background = '#fafafa';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   />
                 </div>
 
                 <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 600,
-                    color: '#4a5568',
-                    fontSize: '13px'
-                  }}>
-                    Color
-                  </label>
+                  <label>Color</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={productInfo.color}
                     onChange={e => setProductInfo(prev => ({ ...prev, color: e.target.value }))}
                     placeholder="Enter color"
-                    style={{
-                      color:"black",
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      background: '#fafafa'
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#667eea';
-                      e.target.style.background = 'white';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e2e8f0';
-                      e.target.style.background = '#fafafa';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   />
                 </div>
 
                 <div>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 600,
-                    color: '#4a5568',
-                    fontSize: '13px'
-                  }}>
-                    Material
-                  </label>
+                  <label>Material</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={productInfo.material}
                     onChange={e => setProductInfo(prev => ({ ...prev, material: e.target.value }))}
                     placeholder="Enter material"
-                    style={{
-                      color:"black",
-                      width: '100%',
-                      padding: '10px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      background: '#fafafa'
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#667eea';
-                      e.target.style.background = 'white';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e2e8f0';
-                      e.target.style.background = '#fafafa';
-                      e.target.style.boxShadow = 'none';
-                    }}
                   />
                 </div>
 
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label style={{
-                    display: 'block',
-                    marginBottom: '6px',
-                    fontWeight: 600,
-                    color: '#4a5568',
-                    fontSize: '13px'
-                  }}>
-                    Description
-                  </label>
+                <div className="textarea-full">
+                  <label>Description</label>
                   <textarea
+                    className="form-input"
                     value={productInfo.description}
                     onChange={e => setProductInfo(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Enter product description"
                     rows={4}
-                    style={{
-                      color:"black",
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      border: '1px solid #e2e8f0',
-                      fontSize: '14px',
-                      transition: 'all 0.2s ease',
-                      background: '#fafafa',
-                      resize: 'vertical'
-                    }}
-                    onFocus={e => {
-                      e.target.style.borderColor = '#667eea';
-                      e.target.style.background = 'white';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                    }}
-                    onBlur={e => {
-                      e.target.style.borderColor = '#e2e8f0';
-                      e.target.style.background = '#fafafa';
-                      e.target.style.boxShadow = 'none';
-                    }}
+                    style={{ resize: 'vertical' }}
                   />
                 </div>
               </div>
             </div>
 
             {/* Upload Section */}
-            <div style={{
-              background: 'white',
-              borderRadius: '12px',
-              padding: '25px',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-              border: '1px solid #e2e8f0'
-            }}>
-              <h2 style={{
-                fontSize: '20px',
-                fontWeight: 600,
-                color: '#2d3748',
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}>
-                <span style={{
-                  background: '#764ba2',
-                  color: 'white',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '14px'
-                }}>
-                  2
-                </span>
+            <div className="card">
+              <div className="card-title">
+                <span className="step-number" style={{ background: '#764ba2' }}>2</span>
                 Upload & Analyze
-              </h2>
+              </div>
               
               {/* Drop Zone */}
               <div
+                className="drop-zone"
                 onClick={() => fileInputRef.current?.click()}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
-                style={{
-                  border: '2px dashed #cbd5e0',
-                  borderRadius: '12px',
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  background: '#f7fafc',
-                  marginBottom: '20px',
-                  position: 'relative'
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = '#667eea';
-                  e.currentTarget.style.background = '#edf2f7';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = '#cbd5e0';
-                  e.currentTarget.style.background = '#f7fafc';
-                }}
               >
                 <input
                   type="file"
@@ -736,48 +458,13 @@ function App() {
 
               {/* Analyze Button */}
               <button
+                className="analyze-button"
                 onClick={analyzeImage}
                 disabled={loading || !selectedImage}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  background: loading || !selectedImage 
-                    ? '#cbd5e0' 
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '16px',
-                  cursor: loading || !selectedImage ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s ease',
-                  opacity: loading || !selectedImage ? 0.7 : 1,
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-                onMouseEnter={e => {
-                  if (!loading && selectedImage) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!loading && selectedImage) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }
-                }}
               >
                 {loading ? (
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <div style={{
-                      width: '16px',
-                      height: '16px',
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      borderTopColor: 'white',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
+                    <div className="spinner" />
                     Analyzing Image...
                   </span>
                 ) : (
@@ -788,27 +475,9 @@ function App() {
           </div>
 
           {/* Right Panel - Results */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'white',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-            border: '1px solid #e2e8f0'
-          }}>
+          <div className="right-panel">
             {/* Header for Results */}
-            <div style={{
-              padding: '20px 25px',
-              background: 'white',
-              borderBottom: '1px solid #e2e8f0',
-              fontWeight: 600,
-              fontSize: '20px',
-              color: '#2d3748',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
+            <div className="results-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{
                   background: '#48bb78',
@@ -838,61 +507,104 @@ function App() {
             </div>
 
             {/* Results Content */}
-            <div style={{
-              flex: 1,
-              padding: '25px',
-              overflowY: 'auto',
-              background: '#fafafa',
-              minHeight: '400px'
-            }}>
-              {data ? (
+            <div className="results-content">
+              {showSelectedStep ? (
+                // Step 3: Show selected images
+                <div className="selected-items-step">
+                  <h3 className="section-title">
+                    <div className="section-icon">✓</div>
+                    Selected Images ({selectedImages.length})
+                  </h3>
+                  <p style={{ color: '#718096', fontSize: '14px', marginBottom: '15px' }}>
+                    These are the images you selected from the modal. You can remove any image by clicking the X button.
+                  </p>
+                  
+                  {selectedImages.length > 0 ? (
+                    <div className="selected-items-grid">
+                      {selectedImages.map((image, index) => (
+                        <div key={index} className="selected-item">
+                          <button
+                            className="remove-selected"
+                            onClick={() => removeSelectedImage(image.url)}
+                          >
+                            ×
+                          </button>
+                          <div className="image-container">
+                            <img
+                              src={image.url}
+                              alt={`Selected ${index + 1}`}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                            />
+                          </div>
+                          <div style={{
+                            padding: '8px',
+                            fontSize: '12px',
+                            color: '#718096',
+                            textAlign: 'center',
+                            background: '#fafafa'
+                          }}>
+                            Image {image.index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '40px 20px',
+                      textAlign: 'center',
+                      color: '#a0aec0',
+                      background: '#f8fafc',
+                      borderRadius: '8px',
+                      border: '1px dashed #e2e8f0'
+                    }}>
+                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>
+                        🖼️
+                      </div>
+                      <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
+                        No images selected
+                      </div>
+                      <div style={{ fontSize: '14px' }}>
+                        Go back to the modal to select images
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowSelectedStep(false);
+                          setShowModal(true);
+                        }}
+                        style={{
+                          marginTop: '20px',
+                          padding: '10px 20px',
+                          background: '#667eea',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 600
+                        }}
+                      >
+                        Open Modal Again
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : data ? (
                 <>
                   {/* Detected Labels Section */}
                   {data.data.detected_labels?.length > 0 && (
-                    <div style={{ marginBottom: '30px' }}>
-                      <h3 style={{
-                        fontSize: '16px',
-                        fontWeight: 600,
-                        color: '#4a5568',
-                        marginBottom: '15px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          background: '#edf2f7',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          color: '#667eea',
-                          fontWeight: 600
-                        }}>
-                          L
-                        </div>
+                    <div className="labels-section">
+                      <h3 className="section-title">
+                        <div className="section-icon">L</div>
                         Detected Labels ({data.data.detected_labels.length})
                       </h3>
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                        gap: '10px'
-                      }}>
+                      <div className="labels-grid">
                         {data.data.detected_labels
                           .slice(0, 8)
                           .map((label, index) => (
-                            <div
-                              key={index}
-                              style={{
-                                background: 'white',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                border: '1px solid #e2e8f0',
-                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
-                              }}
-                            >
+                            <div key={index} className="label-card">
                               <div style={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
@@ -932,7 +644,7 @@ function App() {
                     </div>
                   )}
 
-                  {/* Similar Images Section */}
+                  {/* Images Found Summary */}
                   <div>
                     <div style={{
                       display: 'flex',
@@ -940,29 +652,9 @@ function App() {
                       justifyContent: 'space-between',
                       marginBottom: '15px'
                     }}>
-                      <h3 style={{
-                        fontSize: '16px',
-                        fontWeight: 600,
-                        color: '#4a5568',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                      }}>
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          background: '#edf2f7',
-                          borderRadius: '6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          color: '#667eea',
-                          fontWeight: 600
-                        }}>
-                          I
-                        </div>
-                        Similar Images
+                      <h3 className="section-title">
+                        <div className="section-icon">I</div>
+                        Images Found ({getCurrentImages().length})
                       </h3>
                       
                       {imageFilterLoading && (
@@ -973,140 +665,50 @@ function App() {
                           alignItems: 'center',
                           gap: '6px'
                         }}>
-                          <div style={{
-                            width: '12px',
-                            height: '12px',
-                            border: '2px solid #e2e8f0',
-                            borderTopColor: '#667eea',
-                            borderRadius: '50%',
-                            animation: 'spin 1s linear infinite'
-                          }} />
+                          <div className="spinner" style={{ borderTopColor: '#667eea', borderColor: '#e2e8f0' }} />
                           Filtering images...
                         </div>
                       )}
                     </div>
 
                     {getCurrentImages().length > 0 ? (
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                        gap: '15px'
-                      }}>
-                        {getCurrentImages().map((image, index) => (
-                         (
-                              <a
-                                key={index}
-                                href={image}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: 'block',
-                                  textDecoration: 'none',
-                                  color: 'inherit'
-                                }}
-                              >
-                                <div style={{
-                                  background: 'white',
-                                  borderRadius: '8px',
-                                  overflow: 'hidden',
-                                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.08)',
-                                  transition: 'all 0.3s ease',
-                                  height: '100%',
-                                  border: '1px solid #e2e8f0'
-                                }}
-                                onMouseEnter={e => {
-                                  e.currentTarget.style.transform = 'translateY(-4px)';
-                                  e.currentTarget.style.boxShadow = '0 12px 20px rgba(0, 0, 0, 0.12)';
-                                  e.currentTarget.style.borderColor = '#cbd5e0';
-                                }}
-                                onMouseLeave={e => {
-                                  e.currentTarget.style.transform = 'translateY(0)';
-                                  e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.08)';
-                                  e.currentTarget.style.borderColor = '#e2e8f0';
-                                }}
-                                >
-                                  <div style={{
-                                    width: '100%',
-                                    height: '150px',
-                                    background: '#f8fafc',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    overflow: 'hidden',
-                                    position: 'relative'
-                                  }}>
-                                    {/* Loader while this image is being checked/loaded */}
-                                    {imageLoadingByIndex[index] && (
-                                      <div style={{
-                                        position: 'absolute',
-                                        inset: 0,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        background: 'rgba(248, 250, 252, 0.9)',
-                                        zIndex: 2
-                                      }}>
-                                        <div style={{
-                                          width: '24px',
-                                          height: '24px',
-                                          borderRadius: '50%',
-                                          border: '3px solid rgba(102, 126, 234, 0.3)',
-                                          borderTopColor: '#667eea',
-                                          animation: 'spin 1s linear infinite'
-                                        }} />
-                                      </div>
-                                    )}
-
-                                    <img
-                                      src={image}
-                                      alt={`Similar ${index + 1}`}
-                                      style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover',
-                                        opacity: imageLoadingByIndex[index] ? 0.4 : 1,
-                                        transition: 'opacity 0.2s ease'
-                                      }}
-                                      loading="lazy"
-                                      onLoad={() => {
-                                        setImageLoadingByIndex(prev => ({
-                                          ...prev,
-                                          [index]: false
-                                        }));
-                                      }}
-                                      onError={() => {
-                                        setFailedImageIndexes(prev =>
-                                          prev.includes(index)
-                                            ? prev
-                                            : [...prev, index]
-                                        );
-                                        setImageLoadingByIndex(prev => ({
-                                          ...prev,
-                                          [index]: false
-                                        }));
-                                      }}
-                                      onLoadStart={() => {
-                                        setImageLoadingByIndex(prev => ({
-                                          ...prev,
-                                          [index]: true
-                                        }));
-                                      }}
-                                    />
-                                  </div>
-                                  <div style={{
-                                    padding: '10px',
-                                    fontSize: '11px',
-                                    color: '#718096',
-                                    borderTop: '1px solid #f1f5f9',
-                                    wordBreak: 'break-all',
-                                    background: '#fafafa'
-                                  }}>
-                                    Image {index + 1}
-                                  </div>
-                                </div>
-                              </a>
-                            )
-                        ))}
+                      <div>
+                        <div style={{
+                          padding: '15px',
+                          background: '#edf2f7',
+                          borderRadius: '8px',
+                          marginBottom: '20px',
+                          border: '1px solid #cbd5e0'
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}>
+                            <div style={{ fontSize: '14px', color: '#4a5568' }}>
+                              Found {validImagesCount()} images. Please click the button below to view and select images.
+                            </div>
+                            <button
+                              onClick={() => setShowModal(true)}
+                              style={{
+                                padding: '10px 20px',
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                border: 'none',
+                                borderRadius: '8px',
+                                color: 'white',
+                                fontWeight: 600,
+                                fontSize: '14px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}
+                            >
+                              <span>🖼️</span>
+                              View & Select Images
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <div style={{
@@ -1173,17 +775,7 @@ function App() {
 
         {/* Error Display */}
         {error && (
-          <div style={{
-            margin: '0 40px 40px',
-            padding: '16px',
-            background: '#fed7d7',
-            border: '1px solid #fc8181',
-            borderRadius: '8px',
-            color: '#c53030',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between'
-          }}>
+          <div className="error-display">
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ fontSize: '20px' }}>⚠️</div>
               <div style={{ fontSize: '14px' }}>{error}</div>
@@ -1205,75 +797,218 @@ function App() {
         )}
 
         {/* Footer */}
-        <div style={{
-          padding: '20px 40px',
-          background: '#f7fafc',
-          borderTop: '1px solid #e2e8f0',
-          color: '#718096',
-          fontSize: '14px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '10px'
-        }}>
+        <div className="footer">
           <div>
             <strong>Google Vision API Analyzer</strong> • Extract product info, labels, and find similar images
           </div>
           <div style={{ display: 'flex', gap: '15px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: '10px', height: '10px', background: '#48bb78', borderRadius: '50%' }}></div>
+            <div className="status-indicator">
+              <div className="indicator-dot" style={{ background: '#48bb78' }}></div>
               <span>Real-time analysis</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: '10px', height: '10px', background: '#667eea', borderRadius: '50%' }}></div>
+            <div className="status-indicator">
+              <div className="indicator-dot" style={{ background: '#667eea' }}></div>
               <span>Image recognition</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <div style={{ width: '10px', height: '10px', background: '#764ba2', borderRadius: '50%' }}></div>
+            <div className="status-indicator">
+              <div className="indicator-dot" style={{ background: '#764ba2' }}></div>
               <span>Product detection</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* CSS for spinner animation */}
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
-        
-        /* Input focus styles */
-        input:focus, textarea:focus {
-          outline: none;
-        }
-        
-        /* Smooth transitions */
-        * {
-          transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-        }
-      `}</style>
+      {/* Modal for Image Selection */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Select Images ({selectedImages.length} selected)</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#718096'
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <p style={{ color: '#718096', fontSize: '14px', marginBottom: '20px' }}>
+                Select the images you want to include in step 3. Click on any image to select/deselect it.
+              </p>
+              
+              {getCurrentImages().length > 0 ? (
+                <div className="modal-images-grid">
+                  {getCurrentImages().map((image, index) => {
+                    const isSelected = selectedImages.some(img => img.url === image && img.index === index);
+                    const isLoading = imageLoadingByIndex[index];
+                    const isFailed = failedImageIndexes.includes(index);
+                    
+                    return (
+                      <div
+                        key={index}
+                        className={`modal-image-item ${isSelected ? 'selected' : ''}`}
+                        onClick={() => !isLoading && !isFailed && toggleImageSelection(image, index)}
+                      >
+                        <div className="image-container">
+                          {isLoading && (
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: 'rgba(248, 250, 252, 0.9)',
+                              zIndex: 2
+                            }}>
+                              <div className="image-spinner" />
+                            </div>
+                          )}
+                          
+                          <img
+                            src={image}
+                            alt={`Similar ${index + 1}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              opacity: isLoading ? 0.4 : 1
+                            }}
+                            loading="lazy"
+                            onLoad={() => {
+                              setImageLoadingByIndex(prev => ({
+                                ...prev,
+                                [index]: false
+                              }));
+                            }}
+                            onError={() => {
+                              setFailedImageIndexes(prev =>
+                                prev.includes(index)
+                                  ? prev
+                                  : [...prev, index]
+                              );
+                              setImageLoadingByIndex(prev => ({
+                                ...prev,
+                                [index]: false
+                              }));
+                            }}
+                            onLoadStart={() => {
+                              setImageLoadingByIndex(prev => ({
+                                ...prev,
+                                [index]: true
+                              }));
+                            }}
+                          />
+                          
+                          {isSelected && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '10px',
+                              right: '10px',
+                              background: '#48bb78',
+                              color: 'white',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px',
+                              fontWeight: 'bold'
+                            }}>
+                              ✓
+                            </div>
+                          )}
+                          
+                          {isFailed && (
+                            <div style={{
+                              position: 'absolute',
+                              inset: 0,
+                              background: 'rgba(254, 215, 215, 0.9)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#c53030',
+                              fontWeight: '600'
+                            }}>
+                              Failed to load
+                            </div>
+                          )}
+                        </div>
+                        <div style={{
+                          padding: '10px',
+                          fontSize: '13px',
+                          color: '#718096',
+                          textAlign: 'center',
+                          background: '#fafafa',
+                          borderTop: '1px solid #f1f5f9'
+                        }}>
+                          Image {index + 1}
+                          {isSelected && (
+                            <span style={{ color: '#48bb78', marginLeft: '5px' }}>
+                              ✓ Selected
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{
+                  padding: '40px 20px',
+                  textAlign: 'center',
+                  color: '#a0aec0'
+                }}>
+                  No images available for selection
+                </div>
+              )}
+            </div>
+            
+            <div className="modal-footer">
+              <div className="selected-count">
+                {selectedImages.length} image(s) selected
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => setShowModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    background: '#e2e8f0',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#4a5568',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleModalNext}
+                  style={{
+                    padding: '10px 20px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Next → Show in Step 3
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
