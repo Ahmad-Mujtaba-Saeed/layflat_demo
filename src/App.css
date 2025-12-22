@@ -208,10 +208,9 @@
 
 .results-content {
     flex: 1;
-    padding: 25px;
+    padding: 0px 25px;
     overflow-y: auto;
     background: #fafafa;
-    min-height: 400px;
 }
 
 .labels-section {
@@ -289,7 +288,7 @@
 }
 
 .error-display {
-    margin: 0 40px 40px;
+    margin: 20px;
     padding: 16px;
     background: #fed7d7;
     border: 1px solid #fc8181;
@@ -418,6 +417,10 @@
     background: #f8fafc;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
+
+    &:last-child{
+        margin-bottom: 30px;
+    }
 }
 
 .selected-items-grid {

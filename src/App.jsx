@@ -20,7 +20,7 @@ function App() {
   const [failedImageIndexes, setFailedImageIndexes] = useState([]);
   const [imageLoadingByIndex, setImageLoadingByIndex] = useState({});
   const [imageFilterLoading, setImageFilterLoading] = useState(false);
-  
+
   // New states for modal and multi-select
   const [showModal, setShowModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
@@ -43,7 +43,7 @@ function App() {
     }
   };
 
-  
+
 
   // Handle drag and drop
   const handleDrop = (e) => {
@@ -63,86 +63,86 @@ function App() {
     e.preventDefault();
   };
 
-const checkNanoBananaStatus = async (taskId) => {
-  try {
-    const response = await axios.get(`https://darkblue-mink-249537.hostingersite.com/api/nanobanana/record-info?record_id=${taskId}`);
-    const responseData = response.data;
-    
-    // Check if we have a successful response with data
-    if (responseData.code === 200 && responseData.data?.response?.resultImageUrl) {
-      const imageUrl = responseData.data.response.resultImageUrl;
-      
-      // Update the state with the completed image
+  const checkNanoBananaStatus = async (taskId) => {
+    try {
+      const response = await axios.get(`https://darkblue-mink-249537.hostingersite.com/api/nanobanana/record-info?record_id=${taskId}`);
+      const responseData = response.data;
+
+      // Check if we have a successful response with data
+      if (responseData.code === 200 && responseData.data?.response?.resultImageUrl) {
+        const imageUrl = responseData.data.response.resultImageUrl;
+
+        // Update the state with the completed image
+        setGeneratedImage(prev => {
+          const updated = [...(prev || [])];
+          const existingIndex = updated.findIndex(img => img.task_id === taskId);
+
+          if (existingIndex >= 0) {
+            updated[existingIndex] = {
+              ...updated[existingIndex],
+              ...responseData.data,
+              url: imageUrl,
+              status: 'completed'
+            };
+          } else {
+            updated.push({
+              task_id: taskId,
+              ...responseData.data,
+              url: imageUrl,
+              status: 'completed'
+            });
+          }
+
+          return updated;
+        });
+
+        return true; // Stop polling for this task
+      }
+
+      // If we get here, the image isn't ready yet
       setGeneratedImage(prev => {
         const updated = [...(prev || [])];
         const existingIndex = updated.findIndex(img => img.task_id === taskId);
-        
-        if (existingIndex >= 0) {
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            ...responseData.data,
-            url: imageUrl,
-            status: 'completed'
-          };
-        } else {
+
+        if (existingIndex === -1) {
           updated.push({
             task_id: taskId,
             ...responseData.data,
-            url: imageUrl,
-            status: 'completed'
+            status: 'processing'
           });
+        } else {
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            ...responseData.data,
+            status: 'processing'
+          };
         }
-        
+
         return updated;
       });
 
-      return true; // Stop polling for this task
+      return false; // Continue polling
+    } catch (err) {
+      console.error('Error checking status:', err);
+      return false; // Continue polling on error
     }
-    
-    // If we get here, the image isn't ready yet
-    setGeneratedImage(prev => {
-      const updated = [...(prev || [])];
-      const existingIndex = updated.findIndex(img => img.task_id === taskId);
-      
-      if (existingIndex === -1) {
-        updated.push({
-          task_id: taskId,
-          ...responseData.data,
-          status: 'processing'
-        });
-      } else {
-        updated[existingIndex] = {
-          ...updated[existingIndex],
-          ...responseData.data,
-          status: 'processing'
-        };
-      }
-      
-      return updated;
-    });
-
-    return false; // Continue polling
-  } catch (err) {
-    console.error('Error checking status:', err);
-    return false; // Continue polling on error
-  }
-};
-
-useEffect(() => {
-  let pollInterval;
-
-  return () => {
-    if (pollInterval) clearInterval(pollInterval);
   };
-}, []);
-    // Upload and analyze image
+
+  useEffect(() => {
+    let pollInterval;
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, []);
+  // Upload and analyze image
   const generateImage = async (type) => {
     if (!selectedImage) {
       setError('Please select an image first');
       return;
     }
 
-    
+
     setAiGenerateLoading(true);
     setGeneratedImage(null);
     setError(null);
@@ -151,142 +151,142 @@ useEffect(() => {
     const formData = new FormData();
     formData.append('image', selectedImage);
     formData.append('prompt', "change the product photo in a professional product image with cream background");
-    
+
 
     if (type === "nano-banana") {
-  try {
-    setAiGenerateLoading(true);
-    setError(null);
-    setShowAIImageGenerate(true);
-    
-    // Initial API call to start processing
-    const response = await axios.post(
-      'https://darkblue-mink-249537.hostingersite.com/api/image/enhance-nano',
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json'
-        }
-      }
-    );
-// Handle the response with multiple tasks
-const results = response.data.results || [];
-if (results.length === 0) {
-  throw new Error('No tasks were created');
-}
-
-// Start polling for each task
-// Start polling for each task
-const pollIntervals = results
-  .filter(result => result.task_id != null) // Skip null task_ids
-  .map(result => {
-    if (result.status === 'error') {
-      console.error(`Task ${result.task_id} failed:`, result.error);
-      return null;
-    }
-    
-    // Create a variable to store the interval ID
-    const intervalId = setInterval(async () => {
       try {
-        const isComplete = await checkNanoBananaStatus(result.task_id);
-        if (isComplete) {
-          clearInterval(intervalId); // Use the stored interval ID
-          // Update UI to show completion for this specific angle
-          setGeneratedImage(prev => {
-            const updated = [...(prev || [])];
-            const existingIndex = updated.findIndex(img => img.task_id === result.task_id);
-            if (existingIndex >= 0) {
-              updated[existingIndex].status = 'completed';
+        setAiGenerateLoading(true);
+        setError(null);
+        setShowAIImageGenerate(true);
+
+        // Initial API call to start processing
+        const response = await axios.post(
+          'https://darkblue-mink-249537.hostingersite.com/api/image/enhance-nano',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json'
             }
-            return updated;
-          });
+          }
+        );
+        // Handle the response with multiple tasks
+        const results = response.data.results || [];
+        if (results.length === 0) {
+          throw new Error('No tasks were created');
         }
+
+        // Start polling for each task
+        // Start polling for each task
+        const pollIntervals = results
+          .filter(result => result.task_id != null) // Skip null task_ids
+          .map(result => {
+            if (result.status === 'error') {
+              console.error(`Task ${result.task_id} failed:`, result.error);
+              return null;
+            }
+
+            // Create a variable to store the interval ID
+            const intervalId = setInterval(async () => {
+              try {
+                const isComplete = await checkNanoBananaStatus(result.task_id);
+                if (isComplete) {
+                  clearInterval(intervalId); // Use the stored interval ID
+                  // Update UI to show completion for this specific angle
+                  setGeneratedImage(prev => {
+                    const updated = [...(prev || [])];
+                    const existingIndex = updated.findIndex(img => img.task_id === result.task_id);
+                    if (existingIndex >= 0) {
+                      updated[existingIndex].status = 'completed';
+                    }
+                    return updated;
+                  });
+                }
+              } catch (err) {
+                console.error(`Error polling task ${result.task_id}:`, err);
+                clearInterval(intervalId); // Use the stored interval ID
+              }
+            }, 5000); // Poll every 5 seconds
+
+            return intervalId; // Return the interval ID
+          })
+          .filter(Boolean); // Remove any null intervals from failed tasks
+
+        // Clean up intervals on component unmount
+        console.log(generatedImage);
+        setAiGenerateLoading(false);
+        return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
       } catch (err) {
-        console.error(`Error polling task ${result.task_id}:`, err);
-        clearInterval(intervalId); // Use the stored interval ID
+        console.error('Error processing with Nano Banana:', err);
+        setError(err.response?.data?.message || 'Failed to process image. Please try again.');
+        setAiGenerateLoading(false);
       }
-    }, 5000); // Poll every 5 seconds
-    
-    return intervalId; // Return the interval ID
-  })
-  .filter(Boolean); // Remove any null intervals from failed tasks
+    } else if (type == "photoroom-beauty-product") {
+      try {
+        const response = await axios.post(
+          'https://darkblue-mink-249537.hostingersite.com/api/image/enhance-image',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json'
+            }
+          }
+        );
 
-// Clean up intervals on component unmount
-console.log(generatedImage);
-setAiGenerateLoading(false);
-return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
-} catch (err) {
-  console.error('Error processing with Nano Banana:', err);
-  setError(err.response?.data?.message || 'Failed to process image. Please try again.');
-    setAiGenerateLoading(false);
-  }
-}else if(type == "photoroom-beauty-product"){
-    try {
-      const response = await axios.post(
-        'https://darkblue-mink-249537.hostingersite.com/api/image/enhance-image',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json'
-          }
-        }
-      );
+        setGeneratedImage((response.data.images));
 
-      setGeneratedImage((response.data.images));
-      
-   
-    } catch (err) {
-      console.error('Error analyzing image:', err);
-      setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
-      setImageFilterLoading(false);
-    } finally {
-      setAiGenerateLoading(false);
-    }
-  }else if (type == "openai-dalle-3"){
-    try {
-      const response = await axios.post(
-        'https://darkblue-mink-249537.hostingersite.com/api/image/edit-with-dalle',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json'
+
+      } catch (err) {
+        console.error('Error analyzing image:', err);
+        setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
+        setImageFilterLoading(false);
+      } finally {
+        setAiGenerateLoading(false);
+      }
+    } else if (type == "openai-dalle-3") {
+      try {
+        const response = await axios.post(
+          'https://darkblue-mink-249537.hostingersite.com/api/image/edit-with-dalle',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json'
+            }
           }
-        }
-      );
-      
-   
-    } catch (err) {
-      console.error('Error analyzing image:', err);
-      setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
-      setImageFilterLoading(false);
-    } finally {
-      setAiGenerateLoading(false);
-    }
-  }else if(type == "stable-diffusion"){
-    try {
-      const response = await axios.post(
-        'https://darkblue-mink-249537.hostingersite.com/api/image/process-with-modelslab',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json'
+        );
+
+
+      } catch (err) {
+        console.error('Error analyzing image:', err);
+        setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
+        setImageFilterLoading(false);
+      } finally {
+        setAiGenerateLoading(false);
+      }
+    } else if (type == "stable-diffusion") {
+      try {
+        const response = await axios.post(
+          'https://darkblue-mink-249537.hostingersite.com/api/image/process-with-modelslab',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+              'Accept': 'application/json'
+            }
           }
-        }
-      );
-      
-   
-    } catch (err) {
-      console.error('Error analyzing image:', err);
-      setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
-      setImageFilterLoading(false);
-    } finally {
-      setAiGenerateLoading(false);
+        );
+
+
+      } catch (err) {
+        console.error('Error analyzing image:', err);
+        setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
+        setImageFilterLoading(false);
+      } finally {
+        setAiGenerateLoading(false);
+      }
     }
-  }
 
 
   };
@@ -316,10 +316,10 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
           }
         }
       );
-      
+
       if (response.data.status === 'success') {
         setData(response.data);
-        
+
         // Update product info if available from API
         if (response.data.gpt_response) {
           setProductInfo(prev => ({
@@ -327,12 +327,12 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
             ...response.data.gpt_response
           }));
         }
-        
+
         setFailedImageIndexes([]);
         setImageLoadingByIndex({});
         setSelectedImages([]);
         setShowSelectedStep(false);
-        
+
         // Open modal to show images for selection
         setTimeout(() => {
           setImageFilterLoading(false);
@@ -404,7 +404,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
   // Download result as JSON
   const downloadResults = () => {
     if (!data) return;
-    
+
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -419,7 +419,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
   // Copy results to clipboard
   const copyResults = async () => {
     if (!data) return;
-    
+
     try {
       await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
       alert('Results copied to clipboard!');
@@ -431,12 +431,12 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
   // Get current images (similar images only)
   const getCurrentImages = () => {
     if (!data?.data?.web_matches?.similar_images && !data?.data?.web_matches?.partial_matches && !data?.data?.full_matches) return [];
-    
+
     const responseData = [...data?.data?.web_matches?.similar_images, ...data?.data?.web_matches?.partial_matches, ...data?.data?.web_matches?.full_matches]
 
     console.log("ResponseData: ", responseData);
-    
-    
+
+
     return responseData;
   };
 
@@ -456,7 +456,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
             <h1>Google Vision API Analyzer</h1>
             <p>Upload an image to analyze with Google Cloud Vision API</p>
           </div>
-          
+
           {data && (
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
@@ -594,7 +594,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                 <span className="step-number" style={{ background: '#764ba2' }}>1</span>
                 Upload & Analyze
               </div>
-              
+
               {/* Drop Zone */}
               <div
                 className="drop-zone"
@@ -609,7 +609,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                   accept="image/*"
                   style={{ display: 'none' }}
                 />
-                
+
                 <div style={{ fontSize: '48px', marginBottom: '15px' }}>📸</div>
                 <div style={{
                   fontSize: '16px',
@@ -711,7 +711,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                 onClick={() => generateImage('nano-banana')}
                 disabled={aiGenerateLoading || !selectedImage}
               >
-                  Generate with Nano Banana
+                Generate with Nano Banana
               </button>
               <br></br>
               <br></br>
@@ -729,7 +729,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                 onClick={() => generateImage('stable-diffusion')}
                 disabled={aiGenerateLoading || !selectedImage}
               >
-                Generate with stable diffusion 
+                Generate with stable diffusion
 
               </button>
               <br></br>
@@ -740,7 +740,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                 disabled={aiGenerateLoading || !selectedImage}
               >
                 Generate with OpenAI Dall-e-3
-           
+
               </button>
             </div>
           </div>
@@ -765,7 +765,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                 </span>
                 Analysis Results
               </div>
-              
+
               {data && (
                 <div style={{
                   fontSize: '14px',
@@ -773,6 +773,83 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                   fontWeight: 500
                 }}>
                   <span style={{ color: '#48bb78', fontWeight: 600 }}>{validImagesCount()}</span> of {getCurrentImages().length} images found
+                </div>
+              )}
+            </div>
+
+
+            {error && (
+              <div className="error-display">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ fontSize: '20px' }}>⚠️</div>
+                  <div style={{ fontSize: '14px' }}>{error}</div>
+                </div>
+                <button
+                  onClick={() => setError(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#c53030',
+                    fontSize: '20px',
+                    cursor: 'pointer',
+                    padding: '0 8px'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+
+            <div className="results-content">
+              {selectedImages.length > 0 && (
+                <div className="selected-items-grid">
+                  {aiGenerateLoading ? (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '16px'
+                    }}>
+                      <div style={{
+                        width: '60px',
+                        height: '60px',
+                        border: '4px solid rgba(255, 255, 255, 0.1)',
+                        borderTopColor: '#4299e1',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      <p style={{
+                        color: '#a0aec0',
+                        margin: '16px 0 0',
+                        textAlign: 'center'
+                      }}>
+                        Creating your image...<br />
+                        <small style={{ opacity: 0.7 }}>This may take a moment</small>
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center'
+                    }}>
+                      {generatedImage && Array.isArray(generatedImage) && generatedImage.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image.url}
+                          alt={`Generated Image ${index + 1}`}
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '60vh',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -789,7 +866,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                   <p style={{ color: '#718096', fontSize: '14px', marginBottom: '15px' }}>
                     These are the images you selected from the modal. You can remove any image by clicking the X button.
                   </p>
-                  
+
                   {selectedImages.length > 0 ? (
                     <div className="selected-items-grid">
                       {selectedImages.map((image, index) => (
@@ -927,7 +1004,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                         <div className="section-icon">I</div>
                         Images Found ({getCurrentImages().length})
                       </h3>
-                      
+
                       {imageFilterLoading && (
                         <div style={{
                           fontSize: '14px',
@@ -1044,30 +1121,6 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
           </div>
         </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="error-display">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ fontSize: '20px' }}>⚠️</div>
-              <div style={{ fontSize: '14px' }}>{error}</div>
-            </div>
-            <button
-              onClick={() => setError(null)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#c53030',
-                fontSize: '20px',
-                cursor: 'pointer',
-                padding: '0 8px'
-              }}
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* Footer */}
         <div className="footer">
           <div>
             <strong>Google Vision API Analyzer</strong> • Extract product info, labels, and find similar images
@@ -1089,140 +1142,76 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
         </div>
       </div>
 
-{showAIImageGenerate && (
-  <div className="modal-overlay" style={{
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000
-  }}>
-    <div className="modal-content" style={{
-      backgroundColor: '#1a202c',
-      borderRadius: '12px',
-      width: '90%',
-      maxWidth: '600px',
-      maxHeight: '90vh',
-      overflow: 'auto',
-      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-    }}>
-      <div className="modal-header" style={{
-        padding: '16px 24px',
-        borderBottom: '1px solid #2d3748',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h3 style={{ 
-          color: 'Black', 
-          margin: 0,
-          fontSize: '1.25rem',
-          fontWeight: 600
+      {/* {showAIImageGenerate && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
         }}>
-          {aiGenerateLoading ? 'Generating Your Image' : 'Image Ready!'}
-        </h3>
-        <button 
-          onClick={() => setShowAIImageGenerate(false)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#a0aec0',
-            fontSize: '1.5rem',
-            cursor: 'pointer',
-            padding: '4px 12px',
-            borderRadius: '4px',
-            transition: 'all 0.2s',
-            ':hover': {
-              color: 'white',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)'
-            }
-          }}
-        >
-          &times;
-        </button>
-      </div>
-      <div className="modal-body" style={{
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '300px'
-      }}>
-        {aiGenerateLoading ? (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '16px'
+          <div className="modal-content" style={{
+            backgroundColor: '#1a202c',
+            borderRadius: '12px',
+            width: '90%',
+            maxWidth: '600px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
           }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              border: '4px solid rgba(255, 255, 255, 0.1)',
-              borderTopColor: '#4299e1',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite'
-            }} />
-            <p style={{ 
-              color: '#a0aec0', 
-              margin: '16px 0 0',
-              textAlign: 'center'
+            <div className="modal-header" style={{
+              padding: '16px 24px',
+              borderBottom: '1px solid #2d3748',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}>
-              Creating your image...<br />
-              <small style={{ opacity: 0.7 }}>This may take a moment</small>
-            </p>
+              <h3 style={{
+                color: 'Black',
+                margin: 0,
+                fontSize: '1.25rem',
+                fontWeight: 600
+              }}>
+                {aiGenerateLoading ? 'Generating Your Image' : 'Image Ready!'}
+              </h3>
+              <button
+                onClick={() => setShowAIImageGenerate(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#a0aec0',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  padding: '4px 12px',
+                  borderRadius: '4px',
+                  transition: 'all 0.2s',
+                  ':hover': {
+                    color: 'white',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                  }
+                }}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body" style={{
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '300px'
+            }}>
+              
+            </div>
           </div>
-        ) : (
-          <div style={{
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}>
-          {generatedImage && Array.isArray(generatedImage) && generatedImage.map((image, index) => (
-            <img 
-              key={index}
-              src={image.url} 
-              alt={`Generated Image ${index + 1}`} 
-              style={{
-                maxWidth: '100%',
-                maxHeight: '60vh',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-              }} 
-            />
-          ))}
-            <button
-              onClick={() => setShowAIImageGenerate(false)}
-              style={{
-                marginTop: '20px',
-                padding: '10px 24px',
-                backgroundColor: '#4299e1',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                transition: 'background-color 0.2s',
-                ':hover': {
-                  backgroundColor: '#3182ce'
-                }
-              }}
-            >
-              Close
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+        </div>
+      )} */}
 
       {/* Modal for Image Selection */}
       {showModal && (
@@ -1243,19 +1232,19 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                 ×
               </button>
             </div>
-            
+
             <div className="modal-body">
               <p style={{ color: '#718096', fontSize: '14px', marginBottom: '20px' }}>
                 Select the images you want to include in step 3. Click on any image to select/deselect it.
               </p>
-              
+
               {getCurrentImages().length > 0 ? (
                 <div className="modal-images-grid">
                   {getCurrentImages().map((image, index) => {
                     const isSelected = selectedImages.some(img => img.url === image && img.index === index);
                     const isLoading = imageLoadingByIndex[index];
                     const isFailed = failedImageIndexes.includes(index);
-                    
+
                     return (
                       <div
                         key={index}
@@ -1276,7 +1265,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                               <div className="image-spinner" />
                             </div>
                           )}
-                          
+
                           <img
                             src={image}
                             alt={`Similar ${index + 1}`}
@@ -1311,7 +1300,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                               }));
                             }}
                           />
-                          
+
                           {isSelected && (
                             <div style={{
                               position: 'absolute',
@@ -1331,7 +1320,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                               ✓
                             </div>
                           )}
-                          
+
                           {isFailed && (
                             <div style={{
                               position: 'absolute',
@@ -1376,7 +1365,7 @@ return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
                 </div>
               )}
             </div>
-            
+
             <div className="modal-footer">
               <div className="selected-count">
                 {selectedImages.length} image(s) selected
