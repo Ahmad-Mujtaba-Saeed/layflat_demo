@@ -43,17 +43,18 @@
 }
 
 .main-content {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 30px;
-    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 32px;
     min-height: 600px;
 }
 
 .left-panel {
     display: flex;
-    flex-direction: column;
-    gap: 30px;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 16px;
 }
 
 .card {
@@ -62,6 +63,8 @@
     padding: 25px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
+    max-width: 100%;
+    width: 100%;
 }
 
 .card-header {
@@ -452,14 +455,19 @@
 
 /* Animations */
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-top-color: white;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -493,4 +501,29 @@
 
 ::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+
+@media(max-width: 992px){
+    .header{
+        padding: 12px 20px;
+    }
+
+    .main-content{
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .vision-analyzer-app{
+        padding: 12px;
+    }
+
+    .left-panel{
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+
+    .card{
+        width: unset;
+    }
 }

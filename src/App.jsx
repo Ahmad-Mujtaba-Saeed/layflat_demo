@@ -24,8 +24,10 @@ function App() {
   // New states for modal and multi-select
   const [showModal, setShowModal] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);
+  const [aiGenerateLoading, setAiGenerateLoading] = useState(false);
   const [showSelectedStep, setShowSelectedStep] = useState(false);
-  
+  const [showAIImageGenerate, setShowAIImageGenerate] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState(null);
   const fileInputRef = useRef(null);
 
   // Handle image selection
@@ -40,6 +42,8 @@ function App() {
       setShowSelectedStep(false);
     }
   };
+
+  
 
   // Handle drag and drop
   const handleDrop = (e) => {
@@ -57,6 +61,234 @@ function App() {
 
   const handleDragOver = (e) => {
     e.preventDefault();
+  };
+
+const checkNanoBananaStatus = async (taskId) => {
+  try {
+    const response = await axios.get(`https://darkblue-mink-249537.hostingersite.com/api/nanobanana/record-info?record_id=${taskId}`);
+    const responseData = response.data;
+    
+    // Check if we have a successful response with data
+    if (responseData.code === 200 && responseData.data?.response?.resultImageUrl) {
+      const imageUrl = responseData.data.response.resultImageUrl;
+      
+      // Update the state with the completed image
+      setGeneratedImage(prev => {
+        const updated = [...(prev || [])];
+        const existingIndex = updated.findIndex(img => img.task_id === taskId);
+        
+        if (existingIndex >= 0) {
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            ...responseData.data,
+            url: imageUrl,
+            status: 'completed'
+          };
+        } else {
+          updated.push({
+            task_id: taskId,
+            ...responseData.data,
+            url: imageUrl,
+            status: 'completed'
+          });
+        }
+        
+        return updated;
+      });
+
+      return true; // Stop polling for this task
+    }
+    
+    // If we get here, the image isn't ready yet
+    setGeneratedImage(prev => {
+      const updated = [...(prev || [])];
+      const existingIndex = updated.findIndex(img => img.task_id === taskId);
+      
+      if (existingIndex === -1) {
+        updated.push({
+          task_id: taskId,
+          ...responseData.data,
+          status: 'processing'
+        });
+      } else {
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          ...responseData.data,
+          status: 'processing'
+        };
+      }
+      
+      return updated;
+    });
+
+    return false; // Continue polling
+  } catch (err) {
+    console.error('Error checking status:', err);
+    return false; // Continue polling on error
+  }
+};
+
+useEffect(() => {
+  let pollInterval;
+
+  return () => {
+    if (pollInterval) clearInterval(pollInterval);
+  };
+}, []);
+    // Upload and analyze image
+  const generateImage = async (type) => {
+    if (!selectedImage) {
+      setError('Please select an image first');
+      return;
+    }
+
+    
+    setAiGenerateLoading(true);
+    setGeneratedImage(null);
+    setError(null);
+    setShowAIImageGenerate(true);
+    setImageFilterLoading(true);
+    const formData = new FormData();
+    formData.append('image', selectedImage);
+    formData.append('prompt', "change the product photo in a professional product image with cream background");
+    
+
+    if (type === "nano-banana") {
+  try {
+    setAiGenerateLoading(true);
+    setError(null);
+    setShowAIImageGenerate(true);
+    
+    // Initial API call to start processing
+    const response = await axios.post(
+      'https://darkblue-mink-249537.hostingersite.com/api/image/enhance-nano',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Accept': 'application/json'
+        }
+      }
+    );
+// Handle the response with multiple tasks
+const results = response.data.results || [];
+if (results.length === 0) {
+  throw new Error('No tasks were created');
+}
+
+// Start polling for each task
+// Start polling for each task
+const pollIntervals = results
+  .filter(result => result.task_id != null) // Skip null task_ids
+  .map(result => {
+    if (result.status === 'error') {
+      console.error(`Task ${result.task_id} failed:`, result.error);
+      return null;
+    }
+    
+    // Create a variable to store the interval ID
+    const intervalId = setInterval(async () => {
+      try {
+        const isComplete = await checkNanoBananaStatus(result.task_id);
+        if (isComplete) {
+          clearInterval(intervalId); // Use the stored interval ID
+          // Update UI to show completion for this specific angle
+          setGeneratedImage(prev => {
+            const updated = [...(prev || [])];
+            const existingIndex = updated.findIndex(img => img.task_id === result.task_id);
+            if (existingIndex >= 0) {
+              updated[existingIndex].status = 'completed';
+            }
+            return updated;
+          });
+        }
+      } catch (err) {
+        console.error(`Error polling task ${result.task_id}:`, err);
+        clearInterval(intervalId); // Use the stored interval ID
+      }
+    }, 5000); // Poll every 5 seconds
+    
+    return intervalId; // Return the interval ID
+  })
+  .filter(Boolean); // Remove any null intervals from failed tasks
+
+// Clean up intervals on component unmount
+console.log(generatedImage);
+setAiGenerateLoading(false);
+return () => pollIntervals.forEach(intervalId => clearInterval(intervalId));
+} catch (err) {
+  console.error('Error processing with Nano Banana:', err);
+  setError(err.response?.data?.message || 'Failed to process image. Please try again.');
+    setAiGenerateLoading(false);
+  }
+}else if(type == "photoroom-beauty-product"){
+    try {
+      const response = await axios.post(
+        'https://darkblue-mink-249537.hostingersite.com/api/image/enhance-image',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      setGeneratedImage((response.data.images));
+      
+   
+    } catch (err) {
+      console.error('Error analyzing image:', err);
+      setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
+      setImageFilterLoading(false);
+    } finally {
+      setAiGenerateLoading(false);
+    }
+  }else if (type == "openai-dalle-3"){
+    try {
+      const response = await axios.post(
+        'https://darkblue-mink-249537.hostingersite.com/api/image/edit-with-dalle',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      
+   
+    } catch (err) {
+      console.error('Error analyzing image:', err);
+      setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
+      setImageFilterLoading(false);
+    } finally {
+      setAiGenerateLoading(false);
+    }
+  }else if(type == "stable-diffusion"){
+    try {
+      const response = await axios.post(
+        'https://darkblue-mink-249537.hostingersite.com/api/image/process-with-modelslab',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
+          }
+        }
+      );
+      
+   
+    } catch (err) {
+      console.error('Error analyzing image:', err);
+      setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
+      setImageFilterLoading(false);
+    } finally {
+      setAiGenerateLoading(false);
+    }
+  }
+
+
   };
 
   // Upload and analyze image
@@ -146,6 +378,7 @@ function App() {
   const clearAll = () => {
     setData(null);
     setSelectedImage(null);
+    setGeneratedImage(null);
     setImagePreview(null);
     setError(null);
     setProductInfo({
@@ -264,7 +497,7 @@ function App() {
             <div className="card">
               <div className="card-header">
                 <div className="card-title">
-                  <span className="step-number">1</span>
+                  <span className="step-number">2</span>
                   Product Information
                 </div>
                 {data?.gpt_response && (
@@ -358,7 +591,7 @@ function App() {
             {/* Upload Section */}
             <div className="card">
               <div className="card-title">
-                <span className="step-number" style={{ background: '#764ba2' }}>2</span>
+                <span className="step-number" style={{ background: '#764ba2' }}>1</span>
                 Upload & Analyze
               </div>
               
@@ -470,6 +703,44 @@ function App() {
                 ) : (
                   '🔍 Analyze with Google Vision API'
                 )}
+              </button>
+              <br></br>
+              <br></br>
+              <button
+                className="analyze-button"
+                onClick={() => generateImage('nano-banana')}
+                disabled={aiGenerateLoading || !selectedImage}
+              >
+                  Generate with Nano Banana
+              </button>
+              <br></br>
+              <br></br>
+              <button
+                className="analyze-button"
+                onClick={() => generateImage('photoroom-beauty-product')}
+                disabled={aiGenerateLoading || !selectedImage}
+              >
+                Generate with photoroom Beauty Product
+              </button>
+              <br></br>
+              <br></br>
+              <button
+                className="analyze-button"
+                onClick={() => generateImage('stable-diffusion')}
+                disabled={aiGenerateLoading || !selectedImage}
+              >
+                Generate with stable diffusion 
+
+              </button>
+              <br></br>
+              <br></br>
+              <button
+                className="analyze-button"
+                onClick={() => generateImage('openai-dalle-3')}
+                disabled={aiGenerateLoading || !selectedImage}
+              >
+                Generate with OpenAI Dall-e-3
+           
               </button>
             </div>
           </div>
@@ -817,6 +1088,141 @@ function App() {
           </div>
         </div>
       </div>
+
+{showAIImageGenerate && (
+  <div className="modal-overlay" style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+  }}>
+    <div className="modal-content" style={{
+      backgroundColor: '#1a202c',
+      borderRadius: '12px',
+      width: '90%',
+      maxWidth: '600px',
+      maxHeight: '90vh',
+      overflow: 'auto',
+      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+    }}>
+      <div className="modal-header" style={{
+        padding: '16px 24px',
+        borderBottom: '1px solid #2d3748',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <h3 style={{ 
+          color: 'Black', 
+          margin: 0,
+          fontSize: '1.25rem',
+          fontWeight: 600
+        }}>
+          {aiGenerateLoading ? 'Generating Your Image' : 'Image Ready!'}
+        </h3>
+        <button 
+          onClick={() => setShowAIImageGenerate(false)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#a0aec0',
+            fontSize: '1.5rem',
+            cursor: 'pointer',
+            padding: '4px 12px',
+            borderRadius: '4px',
+            transition: 'all 0.2s',
+            ':hover': {
+              color: 'white',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)'
+            }
+          }}
+        >
+          &times;
+        </button>
+      </div>
+      <div className="modal-body" style={{
+        padding: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '300px'
+      }}>
+        {aiGenerateLoading ? (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '4px solid rgba(255, 255, 255, 0.1)',
+              borderTopColor: '#4299e1',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <p style={{ 
+              color: '#a0aec0', 
+              margin: '16px 0 0',
+              textAlign: 'center'
+            }}>
+              Creating your image...<br />
+              <small style={{ opacity: 0.7 }}>This may take a moment</small>
+            </p>
+          </div>
+        ) : (
+          <div style={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+          {generatedImage && Array.isArray(generatedImage) && generatedImage.map((image, index) => (
+            <img 
+              key={index}
+              src={image.url} 
+              alt={`Generated Image ${index + 1}`} 
+              style={{
+                maxWidth: '100%',
+                maxHeight: '60vh',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+              }} 
+            />
+          ))}
+            <button
+              onClick={() => setShowAIImageGenerate(false)}
+              style={{
+                marginTop: '20px',
+                padding: '10px 24px',
+                backgroundColor: '#4299e1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                transition: 'background-color 0.2s',
+                ':hover': {
+                  backgroundColor: '#3182ce'
+                }
+              }}
+            >
+              Close
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Modal for Image Selection */}
       {showModal && (
