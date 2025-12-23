@@ -268,60 +268,60 @@ function App() {
         setAiGenerateLoading(false);
       }
     } else if (type == "stable-diffusion") {
-     try {
-  // Array of different prompts or settings for the 4 images
-  const prompts = [
-    "Product photo with white background, clean and minimalist",
-    "Product on a white surface with soft lighting, clean and minimalist",
-    "Product with a slight shadow and reflection, professional e-commerce style",
-    "Product with a slight 3/4 angle, professional product photography"
-  ];
+      try {
+        // Array of different prompts or settings for the 4 images
+        const prompts = [
+          "Product photo with white background, clean and minimalist",
+          "Product on a white surface with soft lighting, clean and minimalist",
+          "Product with a slight shadow and reflection, professional e-commerce style",
+          "Product with a slight 3/4 angle, professional product photography"
+        ];
 
-  // Create an array of promises for parallel requests
-// Create an array of promises for parallel requests
-    const requests = prompts.map(prompt => {
-      // Create a new FormData instance for each request
-      const requestFormData = new FormData();
-      
-      // Append the existing file
-      requestFormData.append('image', formData.get('image'));
-      
-      // Append the prompt
-      requestFormData.append('prompt', prompt);
+        // Create an array of promises for parallel requests
+        // Create an array of promises for parallel requests
+        const requests = prompts.map(prompt => {
+          // Create a new FormData instance for each request
+          const requestFormData = new FormData();
 
-      return axios.post(
-        'https://darkblue-mink-249537.hostingersite.com/api/image/process-with-stability-ai',
-        requestFormData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Accept': 'application/json'
-          }
-        }
-      );
-    });
+          // Append the existing file
+          requestFormData.append('image', formData.get('image'));
 
-  // Wait for all requests to complete
-  const responses = await Promise.all(requests);
+          // Append the prompt
+          requestFormData.append('prompt', prompt);
 
-  // Format the responses to match your UI structure
-  const images = responses
-    .filter(response => response.data && response.data.data && response.data.data.image_url)
-    .map((response, index) => ({
-      id: `img-${Date.now()}-${index}`,
-      url: response.data.data.image_url,
-      status: 'completed'
-    }));
+          return axios.post(
+            'https://darkblue-mink-249537.hostingersite.com/api/image/process-with-stability-ai',
+            requestFormData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json'
+              }
+            }
+          );
+        });
 
-  setGeneratedImage(images);
+        // Wait for all requests to complete
+        const responses = await Promise.all(requests);
 
-} catch (err) {
-  console.error('Error generating images:', err);
-  setError(err.response?.data?.message || 'Failed to generate images. Please try again.');
-} finally {
-  setAiGenerateLoading(false);
-  setImageFilterLoading(false);
-}
+        // Format the responses to match your UI structure
+        const images = responses
+          .filter(response => response.data && response.data.data && response.data.data.image_url)
+          .map((response, index) => ({
+            id: `img-${Date.now()}-${index}`,
+            url: response.data.data.image_url,
+            status: 'completed'
+          }));
+
+        setGeneratedImage(images);
+
+      } catch (err) {
+        console.error('Error generating images:', err);
+        setError(err.response?.data?.message || 'Failed to generate images. Please try again.');
+      } finally {
+        setAiGenerateLoading(false);
+        setImageFilterLoading(false);
+      }
     }
 
 
@@ -485,46 +485,46 @@ function App() {
 
   return (
     <div className="vision-analyzer-app">
-      <div className="container">
-        {/* Header */}
-        <div className="header">
-          <div className="header-content">
-            <h1>Google Vision API Analyzer</h1>
-            <p>Upload an image to analyze with Google Cloud Vision API</p>
-          </div>
-
-          {data && (
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                onClick={clearAll}
-                style={{
-                  padding: '10px 20px',
-                  background: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(245, 101, 101, 0.4)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                🗑️ Clear All
-              </button>
-            </div>
-          )}
+      {/* Header */}
+      <div className="header">
+        <div className="header-content">
+          <h1>Google Vision API Analyzer</h1>
+          <p>Upload an image to analyze with Google Cloud Vision API</p>
         </div>
+
+        {data && (
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={clearAll}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(245, 101, 101, 0.4)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              🗑️ Clear All
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="container">
 
         <div className="main-content">
           {/* Left Panel - Product Info & Upload */}
@@ -627,7 +627,7 @@ function App() {
             {/* Upload Section */}
             <div className="card">
               <div className="card-title">
-                <span className="step-number" style={{ background: '#764ba2' }}>1</span>
+                <span className="step-number">1</span>
                 Upload & Analyze
               </div>
 
@@ -646,18 +646,18 @@ function App() {
                   style={{ display: 'none' }}
                 />
 
-                <div style={{ fontSize: '48px', marginBottom: '15px' }}>📸</div>
+                <div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-up"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 18.004h-5.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.38 0 2.57 .811 3.128 1.986" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
+                </div>
                 <div style={{
                   fontSize: '16px',
-                  fontWeight: 600,
-                  color: '#2d3748',
-                  marginBottom: '8px'
+                  color: '#7a7a7a',
                 }}>
                   {selectedImage ? 'Click to change image' : 'Drag & drop or click to upload'}
                 </div>
                 <div style={{
                   fontSize: '14px',
-                  color: '#718096'
+                  color: '#7a7a7a'
                 }}>
                   Supports JPG, PNG, WebP, etc. (Max 10MB)
                 </div>
@@ -666,13 +666,13 @@ function App() {
               {/* Image Preview */}
               {imagePreview && (
                 <div style={{
-                  marginBottom: '20px',
+                  marginBottom: '16px',
                   textAlign: 'center'
                 }}>
                   <div style={{
                     fontSize: '14px',
-                    color: '#718096',
-                    marginBottom: '10px',
+                    color: '#7a7a7a',
+                    marginBottom: '8px',
                     textAlign: 'left'
                   }}>
                     Selected Image Preview:
@@ -687,9 +687,8 @@ function App() {
                       alt="Preview"
                       style={{
                         maxWidth: '100%',
-                        maxHeight: '200px',
+                        maxHeight: '136px',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
                       }}
                     />
                     <button
@@ -698,14 +697,15 @@ function App() {
                         position: 'absolute',
                         top: '-8px',
                         right: '-8px',
-                        background: '#f56565',
+                        background: '##f00',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '50%',
+                        borderRadius: '3px',
                         width: '24px',
                         height: '24px',
                         cursor: 'pointer',
-                        fontSize: '14px',
+                        fontSize: '20px',
+                        padding: '6px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -717,7 +717,7 @@ function App() {
                   </div>
                   <div style={{
                     fontSize: '12px',
-                    color: '#718096',
+                    color: '#7a7a7a',
                     marginTop: '8px'
                   }}>
                     {selectedImage?.name} ({(selectedImage?.size / 1024 / 1024).toFixed(2)} MB)
@@ -838,54 +838,54 @@ function App() {
 
 
             <div className="results-content">
-                <div className="selected-items-grid">
-                  {aiGenerateLoading ? (
+              <div className="selected-items-grid">
+                {aiGenerateLoading ? (
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '16px'
+                  }}>
                     <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '16px'
+                      width: '60px',
+                      height: '60px',
+                      border: '4px solid rgba(255, 255, 255, 0.1)',
+                      borderTopColor: '#4299e1',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    <p style={{
+                      color: '#a0aec0',
+                      margin: '16px 0 0',
+                      textAlign: 'center'
                     }}>
-                      <div style={{
-                        width: '60px',
-                        height: '60px',
-                        border: '4px solid rgba(255, 255, 255, 0.1)',
-                        borderTopColor: '#4299e1',
-                        borderRadius: '50%',
-                        animation: 'spin 1s linear infinite'
-                      }} />
-                      <p style={{
-                        color: '#a0aec0',
-                        margin: '16px 0 0',
-                        textAlign: 'center'
-                      }}>
-                        Creating your image...<br />
-                        <small style={{ opacity: 0.7 }}>This may take a moment</small>
-                      </p>
-                    </div>
-                  ) : (
-                    <div style={{
-                      width: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center'
-                    }}>
-                      {generatedImage && Array.isArray(generatedImage) && generatedImage.map((image, index) => (
-                        <img
-                          key={index}
-                          src={image.url}
-                          alt={`Generated Image ${index + 1}`}
-                          style={{
-                            maxWidth: '100%',
-                            maxHeight: '60vh',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      Creating your image...<br />
+                      <small style={{ opacity: 0.7 }}>This may take a moment</small>
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                  }}>
+                    {generatedImage && Array.isArray(generatedImage) && generatedImage.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image.url}
+                        alt={`Generated Image ${index + 1}`}
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '60vh',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Results Content */}
