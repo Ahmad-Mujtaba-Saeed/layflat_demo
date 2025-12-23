@@ -245,53 +245,53 @@ function App() {
       } finally {
         setAiGenerateLoading(false);
       }
-    } else if (type == "openai-dalle-3") {
+    } else if (type == "gemini-image-1e") {
       try {
         // Array of different prompts or settings for the 4 images
-  const prompts = [
-    "Product photo with white background, clean and minimalist",
-    "Product on a white surface with soft lighting, clean and minimalist",
-    "Product with a slight shadow and reflection, professional e-commerce style. white background",
-    "Product with a slight 3/4 angle, professional product photography. white background"
-  ];
+        const prompts = [
+          "Product photo with white background, clean and minimalist",
+          "Product on a white surface with soft lighting, clean and minimalist",
+          "Product with a slight shadow and reflection, professional e-commerce style. white background",
+          "Product with a slight 3/4 angle, professional product photography. white background"
+        ];
 
-  // Create an array of promises for parallel requests
-// Create an array of promises for parallel requests
-    const requests = prompts.map(prompt => {
-      // Create a new FormData instance for each request
-      const requestFormData = new FormData();
-      
-      // Append the existing file
-      requestFormData.append('image', formData.get('image'));
-      
-      // Append the prompt
-      requestFormData.append('prompt', prompt);
+        // Create an array of promises for parallel requests
+        // Create an array of promises for parallel requests
+        const requests = prompts.map(prompt => {
+          // Create a new FormData instance for each request
+          const requestFormData = new FormData();
 
-      return axios.post(
-          'https://darkblue-mink-249537.hostingersite.com/api/image/edit-with-dalle',
-          requestFormData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Accept': 'application/json'
+          // Append the existing file
+          requestFormData.append('image', formData.get('image'));
+
+          // Append the prompt
+          requestFormData.append('prompt', prompt);
+
+          return axios.post(
+            'https://darkblue-mink-249537.hostingersite.com/api/image/edit-with-dalle',
+            requestFormData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+                'Accept': 'application/json'
+              }
             }
-          }
-        );
-    });
+          );
+        });
 
-  // Wait for all requests to complete
-  const responses = await Promise.all(requests);
+        // Wait for all requests to complete
+        const responses = await Promise.all(requests);
 
-  // Format the responses to match your UI structure
-  const images = responses
-    .filter(response => response.data && response.data.data && response.data.data.image_url)
-    .map((response, index) => ({
-      id: `img-${Date.now()}-${index}`,
-      url: response.data.data.image_url,
-      status: 'completed'
-    }));
+        // Format the responses to match your UI structure
+        const images = responses
+          .filter(response => response.data && response.data.data && response.data.data.image_url)
+          .map((response, index) => ({
+            id: `img-${Date.now()}-${index}`,
+            url: response.data.data.image_url,
+            status: 'completed'
+          }));
 
-  setGeneratedImage(images);
+        setGeneratedImage(images);
 
 
       } catch (err) {
@@ -530,30 +530,10 @@ function App() {
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={clearAll}
-              style={{
-                padding: '10px 20px',
-                background: 'linear-gradient(135deg, #f56565 0%, #e53e3e 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                fontWeight: 600,
-                fontSize: '14px',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px'
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(245, 101, 101, 0.4)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className='danger-button'
             >
-              🗑️ Clear All
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+              Clear All
             </button>
           </div>
         )}
@@ -660,551 +640,500 @@ function App() {
 
             {/* Upload Section */}
             <div className="card">
-              <div className="card-title">
-                <span className="step-number">1</span>
-                Upload & Analyze
-              </div>
-
-              {/* Drop Zone */}
-              <div
-                className="drop-zone"
-                onClick={() => fileInputRef.current?.click()}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageSelect}
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                />
-
-                <div>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-up"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 18.004h-5.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.38 0 2.57 .811 3.128 1.986" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
-                </div>
-                <div style={{
-                  fontSize: '16px',
-                  color: '#7a7a7a',
-                }}>
-                  {selectedImage ? 'Click to change image' : 'Drag & drop or click to upload'}
-                </div>
-                <div style={{
-                  fontSize: '14px',
-                  color: '#7a7a7a'
-                }}>
-                  Supports JPG, PNG, WebP, etc. (Max 10MB)
+              <div className="card-header">
+                <div className="card-title">
+                  <span className="step-number">1</span>
+                  Upload & Analyze
                 </div>
               </div>
 
-              {/* Image Preview */}
-              {imagePreview && (
-                <div style={{
-                  marginBottom: '16px',
-                  textAlign: 'center'
-                }}>
+              <div className="card-body custom-height">
+                {/* Drop Zone */}
+                <div
+                  className="drop-zone"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                >
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                  />
+
+                  <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-cloud-up"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 18.004h-5.343c-2.572 -.004 -4.657 -2.011 -4.657 -4.487c0 -2.475 2.085 -4.482 4.657 -4.482c.393 -1.762 1.794 -3.2 3.675 -3.773c1.88 -.572 3.956 -.193 5.444 1c1.488 1.19 2.162 3.007 1.77 4.769h.99c1.38 0 2.57 .811 3.128 1.986" /><path d="M19 22v-6" /><path d="M22 19l-3 -3l-3 3" /></svg>
+                  </div>
+                  <div style={{
+                    fontSize: '16px',
+                    color: '#7a7a7a',
+                  }}>
+                    {selectedImage ? 'Click to change image' : 'Drag & drop or click to upload'}
+                  </div>
                   <div style={{
                     fontSize: '14px',
-                    color: '#7a7a7a',
-                    marginBottom: '8px',
-                    textAlign: 'left'
+                    color: '#7a7a7a'
                   }}>
-                    Selected Image Preview:
-                  </div>
-                  <div style={{
-                    position: 'relative',
-                    display: 'inline-block',
-                    maxWidth: '100%'
-                  }}>
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '136px',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <button
-                      onClick={clearAll}
-                      style={{
-                        position: 'absolute',
-                        top: '-8px',
-                        right: '-8px',
-                        background: '##f00',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '3px',
-                        width: '24px',
-                        height: '24px',
-                        cursor: 'pointer',
-                        fontSize: '20px',
-                        padding: '6px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                      }}
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#7a7a7a',
-                    marginTop: '8px'
-                  }}>
-                    {selectedImage?.name} ({(selectedImage?.size / 1024 / 1024).toFixed(2)} MB)
+                    Supports JPG, PNG, WebP, etc. (Max 10MB)
                   </div>
                 </div>
-              )}
 
-              {/* Analyze Button */}
-              <button
-                className="analyze-button"
-                onClick={analyzeImage}
-                disabled={loading || !selectedImage}
-              >
-                {loading ? (
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <div className="spinner" />
-                    Analyzing Image...
-                  </span>
-                ) : (
-                  '🔍 Analyze with Google Vision API'
+                {/* Image Preview */}
+                {imagePreview && (
+                  <div style={{
+                    marginBottom: '16px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      color: '#7a7a7a',
+                      marginBottom: '8px',
+                      textAlign: 'left'
+                    }}>
+                      Selected Image Preview:
+                    </div>
+                    <div style={{
+                      position: 'relative',
+                      display: 'inline-block',
+                      maxWidth: '100%'
+                    }}>
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '136px',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <button
+                        onClick={clearAll}
+                        style={{
+                          position: 'absolute',
+                          top: '-8px',
+                          right: '-8px',
+                          background: '##f00',
+                          color: 'white',
+                          border: 'none',
+                          background: '#f00',
+                          borderRadius: '3px',
+                          width: '24px',
+                          height: '24px',
+                          cursor: 'pointer',
+                          fontSize: '20px',
+                          padding: '6px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#7a7a7a',
+                      marginTop: '8px'
+                    }}>
+                      {selectedImage?.name} ({(selectedImage?.size / 1024 / 1024).toFixed(2)} MB)
+                    </div>
+                  </div>
                 )}
-              </button>
-              <br></br>
-              <br></br>
-              <button
-                className="analyze-button"
-                onClick={() => generateImage('nano-banana')}
-                disabled={aiGenerateLoading || !selectedImage}
-              >
-                Generate with Nano Banana
-              </button>
-              <br></br>
-              <br></br>
-              <button
-                className="analyze-button"
-                onClick={() => generateImage('photoroom-beauty-product')}
-                disabled={aiGenerateLoading || !selectedImage}
-              >
-                Generate with photoroom Beauty Product
-              </button>
-              <br></br>
-              <br></br>
-              <button
-                className="analyze-button"
-                onClick={() => generateImage('stable-diffusion')}
-                disabled={aiGenerateLoading || !selectedImage}
-              >
-                Generate with stable diffusion
 
-              </button>
-              <br></br>
-              <br></br>
-              <button
-                className="analyze-button"
-                onClick={() => generateImage('openai-dalle-3')}
-                disabled={aiGenerateLoading || !selectedImage}
-              >
-                Generate with OpenAI Dall-e-3
+                {/* Analyze Button */}
+                <div className="button-group">
+                  <button
+                    className="analyze-button"
+                    onClick={analyzeImage}
+                    disabled={loading || !selectedImage}
+                  >
+                    {loading ? (
+                      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                        <div className="spinner" />
+                        Analyzing Image...
+                      </span>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+                        Analyze with Google Vision API
+                      </>
+                    )}
+                  </button>
+                  <button
+                    className="analyze-button"
+                    onClick={() => generateImage('nano-banana')}
+                    disabled={aiGenerateLoading || !selectedImage}
+                  >
+                    Generate with Nano Banana
+                  </button>
+                  <button
+                    className="analyze-button"
+                    onClick={() => generateImage('photoroom-beauty-product')}
+                    disabled={aiGenerateLoading || !selectedImage}
+                  >
+                    Generate with photoroom Beauty Product
+                  </button>
+                  <button
+                    className="analyze-button"
+                    onClick={() => generateImage('stable-diffusion')}
+                    disabled={aiGenerateLoading || !selectedImage}
+                  >
+                    Generate with stable diffusion
 
-              </button>
+                  </button>
+                  <button
+                    className="analyze-button"
+                    onClick={() => generateImage('gemini-image-1e')}
+                    disabled={aiGenerateLoading || !selectedImage}
+                  >
+                    Generate with Gemini Image 1e
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Right Panel - Results */}
           <div className="right-panel">
-            {/* Header for Results */}
-            <div className="results-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{
-                  background: '#48bb78',
-                  color: 'white',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '14px'
-                }}>
-                  3
-                </span>
-                Analysis Results
-              </div>
-
-              {data && (
-                <div style={{
-                  fontSize: '14px',
-                  color: '#718096',
-                  fontWeight: 500
-                }}>
-                  <span style={{ color: '#48bb78', fontWeight: 600 }}>{validImagesCount()}</span> of {getCurrentImages().length} images found
+            <div className="card">
+              {/* Header for Results */}
+              <div className="card-header">
+                <div class="card-title">
+                  <span class="step-number">3</span>
+                  Product Information
                 </div>
-              )}
-            </div>
 
-
-            {error && (
-              <div className="error-display">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ fontSize: '20px' }}>⚠️</div>
-                  <div style={{ fontSize: '14px' }}>{error}</div>
-                </div>
-                <button
-                  onClick={() => setError(null)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: '#c53030',
-                    fontSize: '20px',
-                    cursor: 'pointer',
-                    padding: '0 8px'
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            )}
-
-
-            <div className="results-content">
-              <div className="selected-items-grid">
-                {aiGenerateLoading ? (
+                {data && (
                   <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '16px'
+                    fontSize: '14px',
+                    color: '#7a7a7a',
+                    fontWeight: 500
                   }}>
-                    <div style={{
-                      width: '60px',
-                      height: '60px',
-                      border: '4px solid rgba(255, 255, 255, 0.1)',
-                      borderTopColor: '#4299e1',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
-                    <p style={{
-                      color: '#a0aec0',
-                      margin: '16px 0 0',
-                      textAlign: 'center'
-                    }}>
-                      Creating your image...<br />
-                      <small style={{ opacity: 0.7 }}>This may take a moment</small>
-                    </p>
-                  </div>
-                ) : (
-                  <div style={{
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}>
-                    {generatedImage && Array.isArray(generatedImage) && generatedImage.map((image, index) => (
-                      <img
-                        key={index}
-                        src={image.url}
-                        alt={`Generated Image ${index + 1}`}
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '60vh',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                        }}
-                      />
-                    ))}
+                    <span style={{ color: '#48bb78', fontWeight: 600 }}>{validImagesCount()}</span> of {getCurrentImages().length} images found
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Results Content */}
-            <div className="results-content">
-              {showSelectedStep ? (
-                // Step 3: Show selected images
+
+              {error && (
+                <div className="error-display">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ fontSize: '20px' }}>⚠️</div>
+                    <div style={{ fontSize: '14px' }}>{error}</div>
+                  </div>
+                  <button
+                    onClick={() => setError(null)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#c53030',
+                      fontSize: '20px',
+                      cursor: 'pointer',
+                      padding: '0 8px'
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
+              {/* Results Content */}
+              <div className="results-content">
                 <div className="selected-items-step">
-                  <h3 className="section-title">
-                    <div className="section-icon">✓</div>
-                    Selected Images ({selectedImages.length})
-                  </h3>
-                  <p style={{ color: '#718096', fontSize: '14px', marginBottom: '15px' }}>
-                    These are the images you selected from the modal. You can remove any image by clicking the X button.
-                  </p>
-
-                  {selectedImages.length > 0 ? (
-                    <div className="selected-items-grid">
-                      {selectedImages.map((image, index) => (
-                        <div key={index} className="selected-item">
-                          <button
-                            className="remove-selected"
-                            onClick={() => removeSelectedImage(image.url)}
-                          >
-                            ×
-                          </button>
-                          <div className="image-container">
-                            <img
-                              src={image.url}
-                              alt={`Selected ${index + 1}`}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover'
-                              }}
-                            />
-                          </div>
-                          <div style={{
-                            padding: '8px',
-                            fontSize: '12px',
-                            color: '#718096',
-                            textAlign: 'center',
-                            background: '#fafafa'
-                          }}>
-                            Image {image.index + 1}
-                          </div>
-                        </div>
-                      ))}
+                  {aiGenerateLoading ? (
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '16px'
+                    }}>
+                      <div style={{
+                        width: '60px',
+                        height: '60px',
+                        border: '4px solid #3e3e3e',
+                        borderTopColor: '#fff',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      <p style={{
+                        color: '#7a7a7a',
+                        margin: '16px 0 0',
+                        textAlign: 'center'
+                      }}>
+                        Creating your image...<br />
+                        This may take a moment
+                      </p>
                     </div>
                   ) : (
                     <div style={{
-                      padding: '40px 20px',
-                      textAlign: 'center',
-                      color: '#a0aec0',
-                      background: '#f8fafc',
-                      borderRadius: '8px',
-                      border: '1px dashed #e2e8f0'
+                      width: '100%',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      alignItems: 'center'
                     }}>
-                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>
-                        🖼️
-                      </div>
-                      <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
-                        No images selected
-                      </div>
-                      <div style={{ fontSize: '14px' }}>
-                        Go back to the modal to select images
-                      </div>
-                      <button
-                        onClick={() => {
-                          setShowSelectedStep(false);
-                          setShowModal(true);
-                        }}
-                        style={{
-                          marginTop: '20px',
-                          padding: '10px 20px',
-                          background: '#667eea',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          fontWeight: 600
-                        }}
-                      >
-                        Open Modal Again
-                      </button>
+                      {generatedImage && Array.isArray(generatedImage) && generatedImage.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image.url}
+                          alt={`Generated Image ${index + 1}`}
+                          style={{
+                            maxWidth: '200px',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                          }}
+                        />
+                      ))}
                     </div>
                   )}
                 </div>
-              ) : data ? (
-                <>
-                  {/* Detected Labels Section */}
-                  {data.data.detected_labels?.length > 0 && (
-                    <div className="labels-section">
-                      <h3 className="section-title">
-                        <div className="section-icon">L</div>
-                        Detected Labels ({data.data.detected_labels.length})
-                      </h3>
-                      <div className="labels-grid">
-                        {data.data.detected_labels
-                          .slice(0, 8)
-                          .map((label, index) => (
-                            <div key={index} className="label-card">
-                              <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '6px'
-                              }}>
-                                <span style={{
-                                  fontSize: '14px',
-                                  fontWeight: 600,
-                                  color: '#2d3748'
-                                }}>
-                                  {label.label}
-                                </span>
-                                <span style={{
-                                  fontSize: '13px',
-                                  fontWeight: 700,
-                                  color: '#48bb78'
-                                }}>
-                                  {(label.confidence * 100).toFixed(0)}%
-                                </span>
-                              </div>
-                              <div style={{
-                                height: '4px',
-                                background: '#e2e8f0',
-                                borderRadius: '2px',
-                                overflow: 'hidden'
-                              }}>
-                                <div style={{
-                                  width: `${label.confidence * 100}%`,
-                                  height: '100%',
-                                  background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'
-                                }} />
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  )}
+                {showSelectedStep ? (
+                  // Step 3: Show selected images
+                  <div className="selected-items-step">
+                    <h3 className="section-title">
+                      <div className="section-icon">✓</div>
+                      Selected Images ({selectedImages.length})
+                    </h3>
+                    <p style={{ color: '#7a7a7a', fontSize: '14px', marginBottom: '15px' }}>
+                      These are the images you selected from the modal. You can remove any image by clicking the X button.
+                    </p>
 
-                  {/* Images Found Summary */}
-                  <div>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '15px'
-                    }}>
-                      <h3 className="section-title">
-                        <div className="section-icon">I</div>
-                        Images Found ({getCurrentImages().length})
-                      </h3>
-
-                      {imageFilterLoading && (
-                        <div style={{
-                          fontSize: '14px',
-                          color: '#718096',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          <div className="spinner" style={{ borderTopColor: '#667eea', borderColor: '#e2e8f0' }} />
-                          Filtering images...
-                        </div>
-                      )}
-                    </div>
-
-                    {getCurrentImages().length > 0 ? (
-                      <div>
-                        <div style={{
-                          padding: '15px',
-                          background: '#edf2f7',
-                          borderRadius: '8px',
-                          marginBottom: '20px',
-                          border: '1px solid #cbd5e0'
-                        }}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
-                          }}>
-                            <div style={{ fontSize: '14px', color: '#4a5568' }}>
-                              Found {validImagesCount()} images. Please click the button below to view and select images.
-                            </div>
+                    {selectedImages.length > 0 ? (
+                      <div className="selected-items-grid">
+                        {selectedImages.map((image, index) => (
+                          <div key={index} className="selected-item">
                             <button
-                              onClick={() => setShowModal(true)}
-                              style={{
-                                padding: '10px 20px',
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                border: 'none',
-                                borderRadius: '8px',
-                                color: 'white',
-                                fontWeight: 600,
-                                fontSize: '14px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                              }}
+                              className="remove-selected"
+                              onClick={() => removeSelectedImage(image.url)}
                             >
-                              <span>🖼️</span>
-                              View & Select Images
+                              ×
                             </button>
+                            <div className="image-container">
+                              <img
+                                src={image.url}
+                                alt={`Selected ${index + 1}`}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover'
+                                }}
+                              />
+                            </div>
+                            <div style={{
+                              padding: '8px',
+                              fontSize: '14px',
+                              color: '#7a7a7a',
+                              textAlign: 'center',
+                              background: '#000'
+                            }}>
+                              Image {image.index + 1}
+                            </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
                     ) : (
                       <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
                         padding: '40px 20px',
+                        textAlign: 'center',
                         color: '#a0aec0',
                         background: '#f8fafc',
                         borderRadius: '8px',
                         border: '1px dashed #e2e8f0'
                       }}>
                         <div style={{ fontSize: '48px', marginBottom: '16px' }}>
-                          🔍
+                          🖼️
                         </div>
                         <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
-                          No similar images found
+                          No images selected
                         </div>
-                        <div style={{ fontSize: '14px', textAlign: 'center' }}>
-                          Google Vision API couldn't find similar images for this upload
+                        <div style={{ fontSize: '14px' }}>
+                          Go back to the modal to select images
                         </div>
+                        <button
+                          onClick={() => {
+                            setShowSelectedStep(false);
+                            setShowModal(true);
+                          }}
+                          style={{
+                            marginTop: '20px',
+                            padding: '10px 20px',
+                            background: '#667eea',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                          }}
+                        >
+                          Open Modal Again
+                        </button>
                       </div>
                     )}
                   </div>
-                </>
-              ) : (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  color: '#a0aec0',
-                  textAlign: 'center',
-                  padding: '60px 20px'
-                }}>
+                ) : data ? (
+                  <>
+                    {/* Detected Labels Section */}
+                    {data.data.detected_labels?.length > 0 && (
+                      <div className="labels-section">
+                        <h3 className="section-title">
+                          <div className="section-icon">L</div>
+                          Detected Labels ({data.data.detected_labels.length})
+                        </h3>
+                        <div className="labels-grid">
+                          {data.data.detected_labels
+                            .slice(0, 8)
+                            .map((label, index) => (
+                              <div key={index} className="label-card">
+                                <div style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  marginBottom: '6px'
+                                }}>
+                                  <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: 600,
+                                    color: '#2d3748'
+                                  }}>
+                                    {label.label}
+                                  </span>
+                                  <span style={{
+                                    fontSize: '13px',
+                                    fontWeight: 700,
+                                    color: '#48bb78'
+                                  }}>
+                                    {(label.confidence * 100).toFixed(0)}%
+                                  </span>
+                                </div>
+                                <div style={{
+                                  height: '4px',
+                                  background: '#e2e8f0',
+                                  borderRadius: '2px',
+                                  overflow: 'hidden'
+                                }}>
+                                  <div style={{
+                                    width: `${label.confidence * 100}%`,
+                                    height: '100%',
+                                    background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)'
+                                  }} />
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Images Found Summary */}
+                    <div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: '15px'
+                      }}>
+                        <h3 className="section-title">
+                          <div className="section-icon">I</div>
+                          Images Found ({getCurrentImages().length})
+                        </h3>
+
+                        {imageFilterLoading && (
+                          <div style={{
+                            fontSize: '15px',
+                            color: '#7a7a7a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <div className="spinner" style={{ borderColor: '#3e3e3e', borderTopColor: '#fff' }} />
+                            Filtering images...
+                          </div>
+                        )}
+                      </div>
+
+                      {getCurrentImages().length > 0 ? (
+                        <div>
+                          <div style={{
+                            padding: '15px',
+                            background: '#12b25545',
+                            borderRadius: '8px',
+                            marginBottom: '20px',
+                            border: '1px solid #12b255'
+                          }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between'
+                            }}>
+                              <div style={{ fontSize: '14px', color: '#12b255' }}>
+                                Found {validImagesCount()} images. Please click the button below to view and select images.
+                              </div>
+                              <button
+                                onClick={() => setShowModal(true)}
+                                className='primary-button'
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-aperture"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M3.6 15h10.55" /><path d="M6.551 4.938l3.26 10.034" /><path d="M17.032 4.636l-8.535 6.201" /><path d="M20.559 14.51l-8.535 -6.201" /><path d="M12.257 20.916l3.261 -10.034" /></svg>
+                                View & Select Images
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '40px 20px',
+                          color: '#a0aec0',
+                          background: '#f8fafc',
+                          borderRadius: '8px',
+                          border: '1px dashed #e2e8f0'
+                        }}>
+                          <div style={{ fontSize: '48px', marginBottom: '16px' }}>
+                            🔍
+                          </div>
+                          <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
+                            No similar images found
+                          </div>
+                          <div style={{ fontSize: '14px', textAlign: 'center' }}>
+                            Google Vision API couldn't find similar images for this upload
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
                   <div style={{
-                    width: '80px',
-                    height: '80px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    borderRadius: '50%',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '36px',
-                    color: 'white',
-                    marginBottom: '20px',
-                    boxShadow: '0 10px 25px rgba(102, 126, 234, 0.3)'
+                    height: '100%',
+                    color: '#7a7a7a',
+                    textAlign: 'center',
+                    padding: '20px 0'
                   }}>
-                    🔍
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      marginBottom: '12px',
+                    }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
+                    </div>
+                    <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#7a7a7a' }}>
+                      Analysis Results
+                    </div>
+                    <div style={{ fontSize: '15px', maxWidth: '400px', lineHeight: '1.3', color: '#7a7a7a' }}>
+                      Upload an image and click "Analyze" to see detailed results from Google Vision API, including similar images and detected labels.
+                    </div>
                   </div>
-                  <div style={{ fontSize: '22px', fontWeight: 700, marginBottom: '12px', color: '#2d3748' }}>
-                    Analysis Results
-                  </div>
-                  <div style={{ fontSize: '15px', maxWidth: '400px', lineHeight: '1.6', color: '#718096' }}>
-                    Upload an image and click "Analyze" to see detailed results from Google Vision API, including similar images and detected labels.
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="footer">
-          <div>
-            <strong>Google Vision API Analyzer</strong> • Extract product info, labels, and find similar images
-          </div>
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <div className="status-indicator">
-              <div className="indicator-dot" style={{ background: '#48bb78' }}></div>
-              <span>Real-time analysis</span>
-            </div>
-            <div className="status-indicator">
-              <div className="indicator-dot" style={{ background: '#667eea' }}></div>
-              <span>Image recognition</span>
-            </div>
-            <div className="status-indicator">
-              <div className="indicator-dot" style={{ background: '#764ba2' }}></div>
-              <span>Product detection</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1294,7 +1223,8 @@ function App() {
                   border: 'none',
                   fontSize: '24px',
                   cursor: 'pointer',
-                  color: '#718096'
+                  color: '#fff',
+                  padding: '6px 12px'
                 }}
               >
                 ×
@@ -1302,7 +1232,7 @@ function App() {
             </div>
 
             <div className="modal-body">
-              <p style={{ color: '#718096', fontSize: '14px', marginBottom: '20px' }}>
+              <p style={{ color: '#fff', fontSize: '15px', marginBottom: '20px', marginTop: '0px' }}>
                 Select the images you want to include in step 3. Click on any image to select/deselect it.
               </p>
 
@@ -1374,7 +1304,7 @@ function App() {
                               position: 'absolute',
                               top: '10px',
                               right: '10px',
-                              background: '#48bb78',
+                              background: '#12b255',
                               color: 'white',
                               width: '24px',
                               height: '24px',
@@ -1382,7 +1312,7 @@ function App() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '14px',
+                              fontSize: '18px',
                               fontWeight: 'bold'
                             }}>
                               ✓
@@ -1407,14 +1337,14 @@ function App() {
                         <div style={{
                           padding: '10px',
                           fontSize: '13px',
-                          color: '#718096',
+                          color: '#7a7a7a',
                           textAlign: 'center',
-                          background: '#fafafa',
-                          borderTop: '1px solid #f1f5f9'
+                          background: '#000',
+                          borderTop: '1px solid #3e3e3e'
                         }}>
                           Image {index + 1}
                           {isSelected && (
-                            <span style={{ color: '#48bb78', marginLeft: '5px' }}>
+                            <span style={{ color: '#12b255', marginLeft: '5px' }}>
                               ✓ Selected
                             </span>
                           )}
@@ -1427,7 +1357,7 @@ function App() {
                 <div style={{
                   padding: '40px 20px',
                   textAlign: 'center',
-                  color: '#a0aec0'
+                  color: '#fff'
                 }}>
                   No images available for selection
                 </div>
@@ -1441,29 +1371,13 @@ function App() {
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button
                   onClick={() => setShowModal(false)}
-                  style={{
-                    padding: '10px 20px',
-                    background: '#e2e8f0',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#4a5568',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  className='secondary-button'
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleModalNext}
-                  style={{
-                    padding: '10px 20px',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: 'white',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
+                  className='primary-button'
                 >
                   Next → Show in Step 3
                 </button>
