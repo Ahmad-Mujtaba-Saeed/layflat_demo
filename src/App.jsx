@@ -802,7 +802,6 @@ function App() {
 
 
             <div className="results-content">
-              {selectedImages.length > 0 && (
                 <div className="selected-items-grid">
                   {aiGenerateLoading ? (
                     <div style={{
@@ -851,7 +850,6 @@ function App() {
                     </div>
                   )}
                 </div>
-              )}
             </div>
 
             {/* Results Content */}
