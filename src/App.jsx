@@ -150,11 +150,11 @@ function App() {
     setImageFilterLoading(true);
     const formData = new FormData();
     formData.append('image', selectedImage);
-    formData.append('prompt', "change the product photo in a professional product image with cream background");
 
 
     if (type === "nano-banana") {
       try {
+        formData.append('prompt', "change the product photo in a professional product image with white background");
         setAiGenerateLoading(true);
         setError(null);
         setShowAIImageGenerate(true);
@@ -223,6 +223,7 @@ function App() {
       }
     } else if (type == "photoroom-beauty-product") {
       try {
+        formData.append('prompt', "change the product photo in a professional product image with white background");
         const response = await axios.post(
           'https://darkblue-mink-249537.hostingersite.com/api/image/enhance-image',
           formData,
@@ -246,6 +247,7 @@ function App() {
       }
     } else if (type == "openai-dalle-3") {
       try {
+        formData.append('prompt', "change the product photo in a professional product image with white background");
         const response = await axios.post(
           'https://darkblue-mink-249537.hostingersite.com/api/image/edit-with-dalle',
           formData,
@@ -266,26 +268,60 @@ function App() {
         setAiGenerateLoading(false);
       }
     } else if (type == "stable-diffusion") {
-      try {
-        const response = await axios.post(
-          'https://darkblue-mink-249537.hostingersite.com/api/image/process-with-modelslab',
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-              'Accept': 'application/json'
-            }
+     try {
+  // Array of different prompts or settings for the 4 images
+  const prompts = [
+    "Product photo with white background, clean and minimalist",
+    "Product on a white surface with soft lighting, clean and minimalist",
+    "Product with a slight shadow and reflection, professional e-commerce style",
+    "Product with a slight 3/4 angle, professional product photography"
+  ];
+
+  // Create an array of promises for parallel requests
+// Create an array of promises for parallel requests
+    const requests = prompts.map(prompt => {
+      // Create a new FormData instance for each request
+      const requestFormData = new FormData();
+      
+      // Append the existing file
+      requestFormData.append('image', formData.get('image'));
+      
+      // Append the prompt
+      requestFormData.append('prompt', prompt);
+
+      return axios.post(
+        'https://darkblue-mink-249537.hostingersite.com/api/image/process-with-stability-ai',
+        requestFormData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json'
           }
-        );
+        }
+      );
+    });
 
+  // Wait for all requests to complete
+  const responses = await Promise.all(requests);
 
-      } catch (err) {
-        console.error('Error analyzing image:', err);
-        setError(err.response?.data?.message || 'Failed to analyze image. Please try again.');
-        setImageFilterLoading(false);
-      } finally {
-        setAiGenerateLoading(false);
-      }
+  // Format the responses to match your UI structure
+  const images = responses
+    .filter(response => response.data && response.data.data && response.data.data.image_url)
+    .map((response, index) => ({
+      id: `img-${Date.now()}-${index}`,
+      url: response.data.data.image_url,
+      status: 'completed'
+    }));
+
+  setGeneratedImage(images);
+
+} catch (err) {
+  console.error('Error generating images:', err);
+  setError(err.response?.data?.message || 'Failed to generate images. Please try again.');
+} finally {
+  setAiGenerateLoading(false);
+  setImageFilterLoading(false);
+}
     }
 
 
