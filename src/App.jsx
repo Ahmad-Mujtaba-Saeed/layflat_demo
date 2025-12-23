@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
+import logo from './assets/app-icon.png'
 
 function App() {
   const [data, setData] = useState(null);
@@ -522,8 +523,13 @@ function App() {
       {/* Header */}
       <div className="header">
         <div className="header-content">
-          <h1>Google Vision API Analyzer</h1>
-          <p>Upload an image to analyze with Google Cloud Vision API</p>
+          <div className="logo">
+            <img src={logo} alt="" />
+          </div>
+          <div className="">
+            <h1>Google Vision API Analyzer</h1>
+            <p>Upload an image to analyze with Google Cloud Vision API</p>
+          </div>
         </div>
 
         {data && (
@@ -532,7 +538,7 @@ function App() {
               onClick={clearAll}
               className='danger-button'
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>
               Clear All
             </button>
           </div>
@@ -668,13 +674,13 @@ function App() {
                   </div>
                   <div style={{
                     fontSize: '16px',
-                    color: '#7a7a7a',
+                    color: '#99a1af',
                   }}>
                     {selectedImage ? 'Click to change image' : 'Drag & drop or click to upload'}
                   </div>
                   <div style={{
                     fontSize: '14px',
-                    color: '#7a7a7a'
+                    color: '#99a1af'
                   }}>
                     Supports JPG, PNG, WebP, etc. (Max 10MB)
                   </div>
@@ -688,7 +694,7 @@ function App() {
                   }}>
                     <div style={{
                       fontSize: '14px',
-                      color: '#7a7a7a',
+                      color: '#99a1af',
                       marginBottom: '8px',
                       textAlign: 'left'
                     }}>
@@ -735,7 +741,7 @@ function App() {
                     </div>
                     <div style={{
                       fontSize: '12px',
-                      color: '#7a7a7a',
+                      color: '#99a1af',
                       marginTop: '8px'
                     }}>
                       {selectedImage?.name} ({(selectedImage?.size / 1024 / 1024).toFixed(2)} MB)
@@ -809,7 +815,7 @@ function App() {
                 {data && (
                   <div style={{
                     fontSize: '14px',
-                    color: '#7a7a7a',
+                    color: '#99a1af',
                     fontWeight: 500
                   }}>
                     <span style={{ color: '#48bb78', fontWeight: 600 }}>{validImagesCount()}</span> of {getCurrentImages().length} images found
@@ -853,13 +859,13 @@ function App() {
                       <div style={{
                         width: '60px',
                         height: '60px',
-                        border: '4px solid #3e3e3e',
+                        border: '4px solid #ffffff1a',
                         borderTopColor: '#fff',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite'
                       }} />
                       <p style={{
-                        color: '#7a7a7a',
+                        color: '#99a1af',
                         margin: '16px 0 0',
                         textAlign: 'center'
                       }}>
@@ -897,7 +903,7 @@ function App() {
                       <div className="section-icon">✓</div>
                       Selected Images ({selectedImages.length})
                     </h3>
-                    <p style={{ color: '#7a7a7a', fontSize: '14px', marginBottom: '15px' }}>
+                    <p style={{ color: '#99a1af', fontSize: '14px', marginBottom: '15px' }}>
                       These are the images you selected from the modal. You can remove any image by clicking the X button.
                     </p>
 
@@ -925,7 +931,7 @@ function App() {
                             <div style={{
                               padding: '8px',
                               fontSize: '14px',
-                              color: '#7a7a7a',
+                              color: '#99a1af',
                               textAlign: 'center',
                               background: '#000'
                             }}>
@@ -1042,12 +1048,12 @@ function App() {
                         {imageFilterLoading && (
                           <div style={{
                             fontSize: '15px',
-                            color: '#7a7a7a',
+                            color: '#99a1af',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px'
                           }}>
-                            <div className="spinner" style={{ borderColor: '#3e3e3e', borderTopColor: '#fff' }} />
+                            <div className="spinner" style={{ borderColor: '#ffffff1a', borderTopColor: '#fff' }} />
                             Filtering images...
                           </div>
                         )}
@@ -1074,7 +1080,7 @@ function App() {
                                 onClick={() => setShowModal(true)}
                                 className='primary-button'
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-aperture"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M3.6 15h10.55" /><path d="M6.551 4.938l3.26 10.034" /><path d="M17.032 4.636l-8.535 6.201" /><path d="M20.559 14.51l-8.535 -6.201" /><path d="M12.257 20.916l3.261 -10.034" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-aperture"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M3.6 15h10.55" /><path d="M6.551 4.938l3.26 10.034" /><path d="M17.032 4.636l-8.535 6.201" /><path d="M20.559 14.51l-8.535 -6.201" /><path d="M12.257 20.916l3.261 -10.034" /></svg>
                                 View & Select Images
                               </button>
                             </div>
@@ -1112,7 +1118,7 @@ function App() {
                     alignItems: 'center',
                     justifyContent: 'center',
                     height: '100%',
-                    color: '#7a7a7a',
+                    color: '#99a1af',
                     textAlign: 'center',
                     padding: '20px 0'
                   }}>
@@ -1125,10 +1131,10 @@ function App() {
                     }}>
                       <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>
                     </div>
-                    <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#7a7a7a' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px', color: '#99a1af' }}>
                       Analysis Results
                     </div>
-                    <div style={{ fontSize: '15px', maxWidth: '400px', lineHeight: '1.3', color: '#7a7a7a' }}>
+                    <div style={{ fontSize: '15px', maxWidth: '400px', lineHeight: '1.3', color: '#99a1af' }}>
                       Upload an image and click "Analyze" to see detailed results from Google Vision API, including similar images and detected labels.
                     </div>
                   </div>
@@ -1337,10 +1343,10 @@ function App() {
                         <div style={{
                           padding: '10px',
                           fontSize: '13px',
-                          color: '#7a7a7a',
+                          color: '#99a1af',
                           textAlign: 'center',
                           background: '#000',
-                          borderTop: '1px solid #3e3e3e'
+                          borderTop: '1px solid #ffffff1a'
                         }}>
                           Image {index + 1}
                           {isSelected && (
